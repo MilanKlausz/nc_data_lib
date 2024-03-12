@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!-- <html lang="en"> -->
+<html lang="en" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test NCrystal library</title>
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.2.2/dist/pouchdb.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="index.js"></script>
+  <!-- <meta name="color-scheme" content="light dark" /> -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css" /> -->
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.fluid.classless.min.css" /> -->
+</head>
+
+<body>
+  <main id="app" x-data="app()" class="container">
+    <div>
+      <h1>NCrystal data library</h1>
+
+      <article id="search-card">
+        <h5>What are you looking for?</h3>
+          <input name="search" type="search" x-model="searchInput" @input.debounce="handleSearchInput"
+            placeholder="Search...">
+
+          <!-- <div class="grid"> -->
+          <div id="searchMaterialResults" :aria-busy="searchInProgress">
+            <!-- <template x-for="material in materials" :key="material._id"> -->
+            <template x-for=" material in materialsToShow">
+              <article>
+                <details>
+                  <summary x-text="material.shortkey"></summary>
+                  <p x-text="material.ncmat_header"></p>
+                  <img :src="'autogen_db/plots/'+material.plot_filename_xsect" >
+                </details>
+              </article>
+            </template>
+          </div>
+          <div id="searchTextResponse" x-text="searchTextResponse" x-show="searchInput"></div>
+      </article>
+    </div>
+  </main>
+</body>
