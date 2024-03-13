@@ -25,7 +25,7 @@ document.addEventListener('alpine:init', () => {
 });
 
 
-window.app = () => {
+window.searchApp = () => {
   let searchInput = ''; //input of the search field
   let searchInProgress = false;
   let materialsToShow = []; //short list of materials to show
@@ -68,6 +68,16 @@ window.app = () => {
     }
   }
 
+  function peakNcmatHeader(fullHeader) {
+    let shortHeaderHtml = '';
+    if(fullHeader.length <= 10)
+      shortHeaderHtml = fullHeader.join('<br>');
+    else{
+      shortHeaderHtml = fullHeader.slice(0, 9).join('<br>') + '<br>(...)';
+    }
+    return shortHeaderHtml;
+  }
+
   async function handleSearchInput() {
     this.searchBegin();
     let searchResults = [];
@@ -91,5 +101,10 @@ window.app = () => {
     searchBegin,
     searchEnd,
     showSearchResults,
+    peakNcmatHeader,
   };
 };
+
+window.materialPage = () => {
+  
+}
