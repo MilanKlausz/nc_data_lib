@@ -64,14 +64,20 @@ document.addEventListener('alpine:init', () => {
       window.dispatchEvent(new PopStateEvent('popstate')); //trigger event that can be listened to
     },
   }));
-})
+});
 
-
+// TODO should I replace 'window.searchApp = () => {'
+// with the following?
+// document.addEventListener('alpine:init', () => {
+// 	Alpine.data('searchApp', () => ({
+// }))
+// })
 window.searchApp = () => {
   let searchInput = ''; //input of the search field
   let searchInProgress = false;
   let materialsToShow = []; //short list of materials to show
   let searchTextResponse = ''; //Text to indicate errors (e.g. too many or no results)
+  let suggestion = '';
 
   async function filterMaterialsByName(searchText) {
     await new Promise(resolve => setTimeout(resolve, 1000));//Just for testing
@@ -102,7 +108,7 @@ window.searchApp = () => {
     if (materialResults.length == 0) {
       this.searchTextResponse = "No materials found."
     }
-    else if (materialResults.length <= 6) {
+    else if (materialResults.length <= 10) {
       this.materialsToShow = materialResults;
     }
     else {
@@ -120,9 +126,21 @@ window.searchApp = () => {
     return shortHeaderHtml;
   }
 
+  function handleSuggestion(searchInput) {
+    if(searchInput.includes('gas')){
+      this.suggestion = `If you are interested in defining gas mixtures, you can read more about how to do it easily in the <a href='https://github.com/mctools/ncrystal/wiki/Announcement-Release3.2.0'>Announcement of Release3.2.0</a>.`;
+      console.log('found GAS in input', suggestion);
+    }
+    else{
+      this.suggestion='';
+    }
+  }
+
   async function handleSearchInput() {
     this.searchBegin();
     let searchResults = [];
+
+    this.handleSuggestion(this.searchInput);
 
     const filteredByName = await filterMaterialsByName(this.searchInput);
     filteredByName.forEach(mat => { !(searchResults.some(m => m.shortkey === mat.shortkey)) && searchResults.push(mat) });
@@ -144,6 +162,8 @@ window.searchApp = () => {
     searchEnd,
     showSearchResults,
     peakNcmatHeader,
+    suggestion,
+    handleSuggestion,
   };
 };
 
