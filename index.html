@@ -16,24 +16,23 @@
 </head>
 
 <body>
-  <main class="container" x-data="{showMaterial:''}">
+  <main class="container" x-data="urlHandler">
 
     <h1>NCrystal data library</h1>
 
-    <article id="search-app" x-data="searchApp()" x-show="!showMaterial">
+    <article id="search-app" x-data="searchApp()" x-show="!materialSafeKey" x-transition>
       <h5>What are you looking for?</h3>
         <input name="search" type="search" x-model="searchInput" @input.debounce="handleSearchInput"
           placeholder="Search...">
 
         <!-- <div class="grid"> -->
         <div id="searchMaterialResults" :aria-busy="searchInProgress">
-          <!-- <template x-for="material in materials" :key="material._id"> -->
-          <template x-for=" material in materialsToShow">
+          <template x-for="mat in materialsToShow" :key="mat.safekey">
             <article>
               <details>
-                <summary x-text="material.shortkey"> </summary>
-                <p x-html="peakNcmatHeader(material.ncmat_header)"></p>
-                <button @click="showMaterial=material" class="outline"> See material's page for more details</button>
+                <summary x-text="mat.shortkey"> </summary>
+                <p x-html="peakNcmatHeader(mat.ncmat_header)"></p>
+                <button @click="updateURL(mat.safekey)" class="outline"> See material's page for more details</button>
               </details>
             </article>
           </template>
@@ -41,16 +40,19 @@
         <div id="searchTextResponse" x-text="searchTextResponse" x-show="searchInput"></div>
     </article>
 
-    <article id="material-page" x-data="materialPage()" x-show="showMaterial">
-      <h5 x-text="showMaterial.shortkey"></h5>
-      <template x-if="showMaterial && 'ncmat_header' in showMaterial">
-        <p x-html="showMaterial.ncmat_header.join('<br>')"></p>
+    <article id="material-page" x-data="materialPage()" x-show="materialSafeKey" x-transition>
+      <template x-if="material">
+        <div>
+          <h5 x-text="material.shortkey"></h5>
+    
+          <p x-html="material.ncmat_header.join('<br>')"></p>
+    
+          <img :src="'autogen_db/plots/'+material.plot_filename_xsect">
+          <br>
+          <button @click="updateURL('')" class="outline"> Back to search </button>
+        </div>
       </template>
-      <img :src="'autogen_db/plots/'+showMaterial.plot_filename_xsect">
-      <br>
-      <button @click="showMaterial=''" class="outline"> Back to search </button>
     </article>
-
 
   </main>
 </body>

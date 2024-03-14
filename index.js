@@ -18,11 +18,53 @@ document.addEventListener('alpine:init', () => {
         console.error(err);
       });
     },
-    read() {
+    getAll() {
       return this._db.allDocs({ include_docs: true });
+    },
+    async getBySafeKey(safeKey) {
+      return await this._db.allDocs({ include_docs: true }).then((result) => { //TODO refactor to proper db query?
+        return result.rows.map(row => row.doc).filter(el => el.safekey === safeKey)[0];
+      });
     },
   });
 });
+
+document.addEventListener('alpine:init', () => {
+  Alpine.data('urlHandler', () => ({
+    materialSafeKey: '',
+    material: '',
+    async init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const materialKey = urlParams.get('material');
+      if (materialKey) {
+        this.materialSafeKey = materialKey;
+        this.material = await this.getMaterial(this.materialSafeKey);
+      };
+      window.addEventListener('popstate', async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const materialKey = urlParams.get('material');
+        if (materialKey) {
+          this.materialSafeKey = materialKey;
+          this.material = await this.getMaterial(this.materialSafeKey);
+          //TODO add error handling (material not found)
+        }
+        else {
+          this.materialSafeKey = '';
+          this.material = '';
+        }
+      });
+    },
+    async getMaterial(materialSafeKey) { 
+      return await Alpine.store('db').getBySafeKey(materialSafeKey);
+    },
+    updateURL(materialSafeKey) {
+      let params = new URLSearchParams();
+      params.set('material', materialSafeKey);
+      history.pushState(null, null, materialSafeKey ? "?"+params.toString(): '/');
+      window.dispatchEvent(new PopStateEvent('popstate')); //trigger event that can be listened to
+    },
+  }));
+})
 
 
 window.searchApp = () => {
@@ -33,12 +75,12 @@ window.searchApp = () => {
 
   async function filterMaterialsByName(searchText) {
     await new Promise(resolve => setTimeout(resolve, 1000));//Just for testing
-    return await Alpine.store('db').read().then((result) => {
+    return await Alpine.store('db').getAll().then((result) => {
       return result.rows.map(row => row.doc).filter(el => el.key.includes(searchText));
     });
   }
   async function filterMaterialsByDumpText(searchText) {
-    return await Alpine.store('db').read().then((result) => {
+    return await Alpine.store('db').getAll().then((result) => {
       return result.rows.map(row => row.doc).filter(el => el.dump.includes(searchText));
     });
   }
@@ -105,6 +147,8 @@ window.searchApp = () => {
   };
 };
 
-window.materialPage = () => {
-  
-}
+
+document.addEventListener('alpine:init', () => {
+	Alpine.data('materialPage', () => ({
+  }));
+});
