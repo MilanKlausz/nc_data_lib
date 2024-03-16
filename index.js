@@ -54,7 +54,7 @@ document.addEventListener('alpine:init', () => {
         }
       });
     },
-    async getMaterial(materialSafeKey) { 
+    async getMaterial(materialSafeKey) {
       return await Alpine.store('db').getBySafeKey(materialSafeKey);
     },
     updateURL(materialSafeKey) {
@@ -82,12 +82,12 @@ window.searchApp = () => {
   async function filterMaterialsByName(searchText) {
     await new Promise(resolve => setTimeout(resolve, 1000));//Just for testing
     return await Alpine.store('db').getAll().then((result) => {
-      return result.rows.map(row => row.doc).filter(el => el.key.includes(searchText));
+      return result.rows.map(row => row.doc).filter(el => el.key.toLowerCase().includes(searchText.toLowerCase()));
     });
   }
   async function filterMaterialsByDumpText(searchText) {
     return await Alpine.store('db').getAll().then((result) => {
-      return result.rows.map(row => row.doc).filter(el => el.dump.includes(searchText));
+      return result.rows.map(row => row.doc).filter(el => el.dump.toLowerCase().includes(searchText.toLowerCase()));
     });
   }
 
@@ -109,7 +109,7 @@ window.searchApp = () => {
       this.searchTextResponse = "No materials found."
     }
     else if (materialResults.length <= 10) {
-      this.materialsToShow = materialResults;
+      this.materialsToShow = materialResults.map(res => res.material);
     }
     else {
       this.searchTextResponse = "Too many results."
@@ -136,19 +136,49 @@ window.searchApp = () => {
     }
   }
 
+  let searchResultsManager = {
+    searchResults: [],
+    addMaterialToSearchResults: function(material) {
+       if (!this.searchResults.some(m => m.key === material.shortkey)) {
+         this.searchResults.push({
+           'key': material.shortkey,
+           'material': material,
+           'score': 0,
+         });
+       }
+    },
+    modifyScoreOfSearchResult: function(key, score) {
+       this.searchResults.forEach(res => {
+         if (res.key === key) {
+           res.score += score;
+         }
+       });
+    },
+    getSortedResults: function() {
+       return this.searchResults.sort((a, b) => b.score - a.score);
+    }
+   };
+   const nameHitScore = 100;
+   const dumpHitScore = 10;
+
   async function handleSearchInput() {
     this.searchBegin();
-    let searchResults = [];
 
     this.handleSuggestion(this.searchInput);
 
     const filteredByName = await filterMaterialsByName(this.searchInput);
-    filteredByName.forEach(mat => { !(searchResults.some(m => m.shortkey === mat.shortkey)) && searchResults.push(mat) });
+    filteredByName.forEach(mat => {
+      searchResultsManager.addMaterialToSearchResults(mat);
+      searchResultsManager.modifyScoreOfSearchResult(mat.shortkey, nameHitScore);
+    });
 
-    let filteredByDumpText = await filterMaterialsByDumpText(this.searchInput);
-    filteredByDumpText.forEach(mat => { !(searchResults.some(m => m.shortkey === mat.shortkey)) && searchResults.push(mat) });
+    const filteredByDumpText = await filterMaterialsByDumpText(this.searchInput);
+    filteredByDumpText.forEach(mat => {
+      searchResultsManager.addMaterialToSearchResults(mat);
+      searchResultsManager.modifyScoreOfSearchResult(mat.shortkey, dumpHitScore);
+    });
 
-    this.showSearchResults(searchResults);
+    this.showSearchResults(searchResultsManager.getSortedResults());
     this.searchEnd();
   }
 
