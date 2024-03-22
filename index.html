@@ -33,7 +33,7 @@
       </div>
 
       <div id="searchMaterialResults" :aria-busy="searchInProgress">
-        <template x-for="mat in materialsToShow" :key="mat.safekey">
+        <template x-for="mat in materialsToShow.slice(0, displayedResultsNumber)" :key="mat.safekey">
           <article>
             <!-- <details style="margin-bottom:0" @click.outside="$el.hasAttribute('open') && $el.removeAttribute('open')"> -->
             <details style="margin-bottom:0">
@@ -43,6 +43,7 @@
             </details>
           </article>
         </template>
+        <button x-show="materialsToShow.length > displayedResultsNumber" @click="displayedResultsNumber=Infinity" class="outline secondary"> Show all results </button>
       </div>
       <div id="searchTextResponse" x-text="searchTextResponse" x-show="searchInput"></div>
     </article>

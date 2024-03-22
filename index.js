@@ -60,7 +60,7 @@ document.addEventListener('alpine:init', () => {
     updateURL(materialSafeKey) {
       let params = new URLSearchParams();
       params.set('material', materialSafeKey);
-      history.pushState(null, null, materialSafeKey ? "?"+params.toString(): '/');
+      history.pushState(null, null, materialSafeKey ? "?" + params.toString() : '/');
       window.dispatchEvent(new PopStateEvent('popstate')); //trigger event that can be listened to
     },
   }));
@@ -72,7 +72,11 @@ document.addEventListener('alpine:init', () => {
 // 	Alpine.data('searchApp', () => ({
 // }))
 // })
+
+var defaultDisplayedResultsNumber = 10; //number of search results to display by default
+
 window.searchApp = () => {
+  let displayedResultsNumber = defaultDisplayedResultsNumber; //number of search results to display
   let searchInput = ''; //input of the search field
   let searchInProgress = false;
   let materialsToShow = []; //short list of materials to show
@@ -80,7 +84,7 @@ window.searchApp = () => {
   let suggestion = '';
 
   async function filterMaterialsByName(searchText) {
-    await new Promise(resolve => setTimeout(resolve, 1000));//Just for testing
+    // await new Promise(resolve => setTimeout(resolve, 1000));// TODO Just for testing
     return await Alpine.store('db').getAll().then((result) => {
       return result.rows.map(row => row.doc).filter(el => el.key.toLowerCase().includes(searchText.toLowerCase()));
     });
@@ -94,6 +98,7 @@ window.searchApp = () => {
   function searchBegin() {
     this.materialsToShow = [];
     this.searchInProgress = true;
+    this.displayedResultsNumber = defaultDisplayedResultsNumber;
   }
   function searchEnd() {
     this.searchInProgress = false;
@@ -101,26 +106,28 @@ window.searchApp = () => {
   }
 
   function showSearchResults(materialResults) {
-    // console.log(materialResults)
+    console.log(materialResults)
     this.searchInProgress = false;
     this.searchTextResponse = '';
+    const goodScoreThreshold = 100; //TODO move
 
     if (materialResults.length == 0) {
       this.searchTextResponse = "No materials found."
     }
-    else if (materialResults.length <= 10) {
+    else{
+      const goodResultsNumber = materialResults.filter(res => res.score > goodScoreThreshold).length;
+      if(goodResultsNumber > 0){
+        this.displayedResultsNumber = goodResultsNumber;
+      }
       this.materialsToShow = materialResults.map(res => res.material);
-    }
-    else {
-      this.searchTextResponse = "Too many results."
     }
   }
 
   function peakNcmatHeader(fullHeader) {
     let shortHeaderHtml = '';
-    if(fullHeader.length <= 10)
+    if (fullHeader.length <= 10)
       shortHeaderHtml = fullHeader.join('<br>');
-    else{
+    else {
       shortHeaderHtml = fullHeader.slice(0, 9).join('<br>') + '<br>(...)';
     }
     return shortHeaderHtml;
@@ -194,11 +201,12 @@ window.searchApp = () => {
     peakNcmatHeader,
     suggestion,
     handleSuggestion,
+    displayedResultsNumber
   };
 };
 
 
 document.addEventListener('alpine:init', () => {
-	Alpine.data('materialPage', () => ({
+  Alpine.data('materialPage', () => ({
   }));
 });
