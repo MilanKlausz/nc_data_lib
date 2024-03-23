@@ -133,7 +133,7 @@ window.searchApp = () => {
   }
 
   function handleSuggestion(searchPhrases) {
-    if (searchPhrases.some(phrase => phrase.includes('gas'))) {
+    if (searchPhrases.some(phrase => phrase.toLowerCase().includes('gas'))) {
       this.suggestion = `If you are interested in defining gas mixtures, you can read more about how to do it easily in the <a href='https://github.com/mctools/ncrystal/wiki/Announcement-Release3.2.0'>Announcement of Release3.2.0</a>.`;
       console.log('found GAS in input', suggestion);
     }
