@@ -57,10 +57,11 @@ document.addEventListener('alpine:init', () => {
     async getMaterial(materialSafeKey) {
       return await Alpine.store('db').getBySafeKey(materialSafeKey);
     },
+    getMaterialUrlParam(key) {
+      return key ? "?" + new URLSearchParams({ 'material': key }).toString() : '/';
+    },
     updateURL(materialSafeKey) {
-      let params = new URLSearchParams();
-      params.set('material', materialSafeKey);
-      history.pushState(null, null, materialSafeKey ? "?" + params.toString() : '/');
+      history.pushState(null, null, this.getMaterialUrlParam(materialSafeKey));
       window.dispatchEvent(new PopStateEvent('popstate')); //trigger event that can be listened to
     },
   }));

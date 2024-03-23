@@ -13,7 +13,11 @@
   <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" /> -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css" />
   <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.fluid.classless.min.css" /> -->
-  <style> [x-cloak] { display: none !important; } </style>
+  <style>
+    [x-cloak] {
+      display: none !important;
+    }
+  </style>
 </head>
 
 <body>
@@ -23,12 +27,12 @@
 
     <article id="search-app" x-data="searchApp()" x-show="!materialSafeKey" x-transition>
       <h5>What are you looking for?</h5>
-      <input name="search" type="search" x-model="searchInput" @input.debounce="handleSearchInput" @keydown.enter="handleSearchInput"
-        placeholder="Search...">
+      <input name="search" type="search" x-model="searchInput" @input.debounce="handleSearchInput"
+        @keydown.enter="handleSearchInput" placeholder="Search...">
 
       <div id="searchSuggestion" x-show="suggestion" x-cloak>
         <article style="border: 3px solid #1a9505;">
-          <div x-html="suggestion" ></div>
+          <div x-html="suggestion"></div>
         </article>
       </div>
 
@@ -39,11 +43,14 @@
             <details style="margin-bottom:0">
               <summary x-text="mat.shortkey" style="font-weight: bold;color: var(--pico-primary);"></summary>
               <div x-html="peakNcmatHeader(mat.ncmat_header)"></div>
-              <button @click="updateURL(mat.safekey)" class="outline" style="margin-top:10px"> See material's page for more details</button>
+              <a :href="getMaterialUrlParam(mat.safekey)" @click.prevent="updateURL(mat.safekey)">
+                <button class="outline" style="margin-top:10px;">See material's page for more details</button>
+              </a>
             </details>
           </article>
         </template>
-        <button x-show="materialsToShow.length > displayedResultsNumber" @click="displayedResultsNumber=Infinity" class="outline secondary"> Show all results </button>
+        <button x-show="materialsToShow.length > displayedResultsNumber" @click="displayedResultsNumber=Infinity"
+          class="outline secondary"> Show all results </button>
       </div>
       <div id="searchTextResponse" x-text="searchTextResponse" x-show="searchInput"></div>
     </article>
