@@ -108,4 +108,4 @@ def create_DB( outfolder ):
     return outfolder
 
 if __name__=='__main__':
-    create_DB('./autogen_db')
+    create_DB('./src/autogen_db')

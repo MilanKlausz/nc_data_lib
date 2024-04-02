@@ -1,3 +1,7 @@
+#node modules and build products
+node_modules
+dist
+
 #ignore the autogen_db dir
 autogen_db/
 

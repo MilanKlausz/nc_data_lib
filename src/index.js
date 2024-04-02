@@ -1,3 +1,7 @@
+import PouchDB from 'pouchdb';
+import Alpine from 'alpinejs'
+window.Alpine = Alpine
+
 document.addEventListener('alpine:init', () => {
   // Define the store
   Alpine.store('db', {
@@ -7,7 +11,7 @@ document.addEventListener('alpine:init', () => {
       this._db.info().then((result) => {
         if (result.doc_count === 0) {
           // If empty, fetch and populate the database
-          return fetch('autogen_db/db.json')
+          return fetch('db.json')
             .then(response => response.json())
             .then(data => this._db.bulkDocs(data.map((material, index) => ({ _id: index.toString(), ...material }))))
             .then(() => this._db.allDocs({ include_docs: true }));
@@ -240,3 +244,5 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('materialPage', () => ({
   }));
 });
+
+Alpine.start()
