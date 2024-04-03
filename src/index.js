@@ -1,3 +1,5 @@
+'use strict';
+
 import PouchDB from 'pouchdb';
 import Alpine from 'alpinejs'
 window.Alpine = Alpine

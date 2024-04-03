@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build-dev": "webpack --config build-config/webpack.dev.config.js",
+    "build-prod": "webpack --config build-config/webpack.prod.config.js",
     "serve-dev": "webpack serve --open --config build-config/webpack.dev.config.js",
     "start": "npm run serve-dev",
     "test": "echo \"Error: no test specified\" && exit 1"
