@@ -108,4 +108,6 @@ def create_DB( outfolder ):
     return outfolder
 
 if __name__=='__main__':
-    create_DB('./src/autogen_db')
+    currentDir = pathlib.Path(__file__).resolve().parent
+    dbPath = currentDir.parent.joinpath( 'database', 'autogen_db')
+    create_DB(dbPath)

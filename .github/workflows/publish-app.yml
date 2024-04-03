@@ -36,6 +36,9 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
+    - name: Generate database
+      run: npm run generate-data
+
     - name: Build
       run: npm run build-prod
 

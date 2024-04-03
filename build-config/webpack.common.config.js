@@ -5,10 +5,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
-console.log(__dirname)
-console.log(path.resolve(__dirname, '..'))
-console.log(path.resolve(__dirname, '..', 'src/autogen_db'))
-
 module.exports = {
   entry: ['./src/index.js', './src/style.scss'],
   output: {
@@ -23,7 +19,7 @@ module.exports = {
     }),
     new CopyWebpackPlugin({
       patterns: [
-        { from: path.resolve(__dirname, '..', 'src/autogen_db'), to: 'autogen_db' },
+        { from: path.resolve(__dirname, '..', 'database/autogen_db'), to: 'autogen_db' },
       ],
     }),
     new MiniCssExtractPlugin({
