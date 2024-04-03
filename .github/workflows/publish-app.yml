@@ -38,7 +38,7 @@ jobs:
 
     - name: Generate database with NCrystal
       run: |
-        python3 -mpip install ncrystal
+        python3 -mpip install ncrystal matplotlib
         npm run generate-data
 
     - name: Build
