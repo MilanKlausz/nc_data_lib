@@ -11,7 +11,7 @@ document.addEventListener('alpine:init', () => {
       this._db.info().then((result) => {
         if (result.doc_count === 0) {
           // If empty, fetch and populate the database
-          return fetch('db.json')
+          return fetch('autogen_db/db.json')
             .then(response => response.json())
             .then(data => this._db.bulkDocs(data.map((material, index) => ({ _id: index.toString(), ...material }))))
             .then(() => this._db.allDocs({ include_docs: true }));
