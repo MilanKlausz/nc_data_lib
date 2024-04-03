@@ -19,7 +19,7 @@ module.exports = {
     }),
     new CopyWebpackPlugin({
       patterns: [
-        { from: './src/autogen_db', to: 'autogen_db' },
+        { from: path.resolve(__dirname, '..', 'src/autogen_db'), to: 'autogen_db' },
       ],
     }),
     new MiniCssExtractPlugin({
