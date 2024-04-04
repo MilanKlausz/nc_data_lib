@@ -76,6 +76,7 @@ class Entry:
 
         self.__plot_xsect_file = '%s.png'%self.__safekey
         plt.savefig(plotfolder.joinpath(self.__plot_xsect_file))
+        plt.close()
 
 def create_DB_contents( plotfolder ):
     plotfolder = pathlib.Path(plotfolder)
