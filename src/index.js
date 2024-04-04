@@ -64,7 +64,7 @@ document.addEventListener('alpine:init', () => {
       return await Alpine.store('db').getBySafeKey(materialSafeKey);
     },
     getMaterialUrlParam(key) {
-      return key ? "?" + new URLSearchParams({ 'material': key }).toString() : '/';
+      return key ? "?" + new URLSearchParams({ 'material': key }).toString() : window.location.pathname;
     },
     updateURL(materialSafeKey) {
       history.pushState(null, null, this.getMaterialUrlParam(materialSafeKey));
