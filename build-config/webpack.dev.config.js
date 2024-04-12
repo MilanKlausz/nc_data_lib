@@ -14,6 +14,9 @@ function getRepoName() {
 module.exports = merge(commonConfig, {
   mode: 'development',
   devtool: 'inline-source-map',
+  output: {
+    publicPath: `/${getRepoName()}/`,
+  },
   devServer: {
     static: {
       directory: path.join(__dirname, '../dist'),
