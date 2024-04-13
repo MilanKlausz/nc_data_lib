@@ -36,6 +36,9 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
+    - name: Run the tests
+      run: npm test
+
     - name: Generate database with NCrystal
       run: |
         python3 -mpip install ncrystal matplotlib

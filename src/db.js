@@ -19,9 +19,9 @@ async function generateChecksum(serverDbData) {
   return hashHex;
 }
 
-function populateDatabase(serverDbData) {
+async function populateDatabase(serverDbData) {
   // Generate the checksum for the fetched db.json
-  generateChecksum(serverDbData)
+  return generateChecksum(serverDbData)
     .then(checksum => {
       console.log("new checksum is generated:", checksum);
       // Store the checksum in the database
@@ -35,12 +35,13 @@ function populateDatabase(serverDbData) {
     });
 }
 
-function checkAndUpdateDatabase(serverDbData) {
+async function checkAndUpdateDatabase(serverDbData) {
   // Fetch the versionInfo document
   return this._db.get('versionInfo').then(versionInfo => {
     // Generate the current checksum for the db.json file
     return generateChecksum(serverDbData).then(currentChecksum => {
       // Compare the stored checksum with the current checksum
+      console.log("local checksum:", versionInfo.checksum, " serverChecksum:", currentChecksum)
       if (versionInfo.checksum !== currentChecksum) {
         console.log("different checksum, clearing the db and repopulating it");
         // If different, clear the database and repopulate
@@ -71,19 +72,19 @@ const dbStore = {
     this._db.info().then((localDbInfo) => {
       // Fetch the data and process it
       fetch('autogen_db/db.json')
-         .then(response => response.json())
-         .then(serverDbData => {
-           // Now, serverDbData contains the fetched and parsed JSON data
-           if (localDbInfo.doc_count === 0) { // If empty, fetch and populate the database
-             // Pass the fetched data to populateDatabase
-             return this.populateDatabase(serverDbData);
-           } else { // Check if the database needs to be updated
-             console.log("Database exists, checking if it needs to be updated.");
-             // Pass the fetched data to checkAndUpdateDatabase
-             return this.checkAndUpdateDatabase(serverDbData);
-           }
-         });
-     });
+        .then(response => response.json())
+        .then(serverDbData => {
+          // Now, serverDbData contains the fetched and parsed JSON data
+          if (localDbInfo.doc_count === 0) { // If empty, fetch and populate the database
+            // Pass the fetched data to populateDatabase
+            return this.populateDatabase(serverDbData);
+          } else { // Check if the database needs to be updated
+            console.log("Database exists, checking if it needs to be updated.");
+            // Pass the fetched data to checkAndUpdateDatabase
+            return this.checkAndUpdateDatabase(serverDbData);
+          }
+        });
+    });
   },
   populateDatabase,
   checkAndUpdateDatabase,
