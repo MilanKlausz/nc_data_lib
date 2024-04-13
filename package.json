@@ -16,7 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "@picocss/pico": "^2.0.6",
-    "alpinejs": "^3.13.7",
+    "alpinejs": "^3.13.8",
     "pouchdb": "^8.0.1"
   },
   "devDependencies": {
