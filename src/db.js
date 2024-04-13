@@ -1,6 +1,6 @@
 'use strict';
 
-import PouchDB from 'pouchdb';
+const PouchDB = require('pouchdb').default;
 
 async function generateChecksum(serverDbData) {
   const jsonString = JSON.stringify(serverDbData);
@@ -99,4 +99,4 @@ const dbStore = {
   },
 };
 
-export default dbStore;
+module.exports = { dbStore, generateChecksum };
