@@ -39,6 +39,14 @@ Each time:
                         needs and generates one or more bundles."
   *purpose*: Packs all front-end resources into one JS file (+handles dependecies avoiding duplication) + trakcs changes in files on the client side (dev)
 
+- **Babel**
+  *short description*: "It takes your modern JavaScript code and transpiles it into an older version that is widely supported. This process allows developers to leverage the latest language features while ensuring broader compatibility."
+  *link*: https://babeljs.io/
+
+- **Jasmine**
+  A popular JavaScript behavior-driven development (BDD) framework used for unit testing JavaScript applications, providing utilities for running automated tests on both synchronous and asynchronous code. 
+  *link*: https://jasmine.github.io/
+
 - **Alpine.js**:
   A lightweight JavaScript framework that enables the creation of interactive web applications with minimal code.
   It uses directives in HTML to control DOM elements based on data, improving code readability and reducing the need for JS manipulations.
