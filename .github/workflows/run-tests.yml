@@ -1,0 +1,40 @@
+name: Pull request tests
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc # Read the Node.js version from .nvmrc
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+        #This won't be OK for long db generation
+      - name: Generate database with NCrystal
+        run: |
+          python3 -mpip install ncrystal matplotlib
+          npm run generate-data
+
+      - name: Build dev
+        run: npm run build-dev
+
+      - name: Build prod
+        run: npm run build-prod
