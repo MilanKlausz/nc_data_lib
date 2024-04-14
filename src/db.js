@@ -1,34 +1,32 @@
 'use strict';
 
-const PouchDB = require('pouchdb').default;
+let PouchDB;
+if (process.env.NODE_ENV === 'test') {
+  PouchDB = require('pouchdb');// Import PouchDB for testing environment
+} else {
+  PouchDB = require('pouchdb').default;
+}
 
 async function generateChecksum(serverDbData) {
   const jsonString = JSON.stringify(serverDbData);
-
   // Encode the file content as UTF-8
   const encoder = new TextEncoder();
   const dataBuffer = encoder.encode(jsonString);
-
   // Generate the SHA-256 hash
   const hashBuffer = await window.crypto.subtle.digest('SHA-256', dataBuffer);
-
   // Convert the hash to a hexadecimal string
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
   return hashHex;
 }
 
 async function populateDatabase(serverDbData) {
-  // Generate the checksum for the fetched db.json
+  // Generate and store the checksum along with the data in the database
   return generateChecksum(serverDbData)
     .then(checksum => {
-      console.log("new checksum is generated:", checksum);
-      // Store the checksum in the database
+      // Store the checksum in the database labelled as 'versionInfo'
       return this._db.put({ _id: 'versionInfo', checksum: checksum })
-        .then(() => {
-          // Populate the database
-          console.log("Populate database");
+        .then(() => { // Populate the database
           return this._db.bulkDocs(serverDbData.map((material, index) => ({ _id: index.toString(), ...material })))
             .then(() => this._db.allDocs({ include_docs: true }));
         });
@@ -36,23 +34,15 @@ async function populateDatabase(serverDbData) {
 }
 
 async function checkAndUpdateDatabase(serverDbData) {
-  // Fetch the versionInfo document
+  // Compare the checksum of the server material data to the checksum of the stored data
+  // re-populate the database only if the checksum is different
   return this._db.get('versionInfo').then(versionInfo => {
-    // Generate the current checksum for the db.json file
-    return generateChecksum(serverDbData).then(currentChecksum => {
-      // Compare the stored checksum with the current checksum
-      console.log("local checksum:", versionInfo.checksum, " serverChecksum:", currentChecksum)
-      if (versionInfo.checksum !== currentChecksum) {
-        console.log("different checksum, clearing the db and repopulating it");
-        // If different, clear the database and repopulate
+    return generateChecksum(serverDbData).then(serverDataChecksum => {
+      if (versionInfo.checksum !== serverDataChecksum) {
         return this._db.destroy().then(() => {
-          this._db = new PouchDB('ncrystal_db');
+          this._initDb();
           return this.populateDatabase(serverDbData);
         });
-      } else {
-        console.log("checksum is the same, no need to update")
-        // If the same, just fetch all documents
-        return this._db.allDocs({ include_docs: true });
       }
     });
   }).catch(err => {
@@ -66,21 +56,22 @@ async function checkAndUpdateDatabase(serverDbData) {
 }
 
 const dbStore = {
+  _dbName: 'ncrystal_db',
+  _serverDataLocation: 'autogen_db/db.json',
   _db: null,
-  init() {
-    this._db = new PouchDB('ncrystal_db');
-    this._db.info().then((localDbInfo) => {
-      // Fetch the data and process it
-      fetch('autogen_db/db.json')
+  _initDb() { this._db = new PouchDB(this._dbName); },
+  async init() { //automatically called by Alpine.store
+    this._initDb();
+    return this._db.info().then((localDbInfo) => {
+      // Fetch the material data from the server and process it
+      return fetch(this._serverDataLocation)
         .then(response => response.json())
         .then(serverDbData => {
-          // Now, serverDbData contains the fetched and parsed JSON data
-          if (localDbInfo.doc_count === 0) { // If empty, fetch and populate the database
-            // Pass the fetched data to populateDatabase
+          if (localDbInfo.doc_count === 0) {
+            // Local database is empty, so populate it
             return this.populateDatabase(serverDbData);
-          } else { // Check if the database needs to be updated
-            console.log("Database exists, checking if it needs to be updated.");
-            // Pass the fetched data to checkAndUpdateDatabase
+          } else {
+            // Update the database if server data differs from the already stored
             return this.checkAndUpdateDatabase(serverDbData);
           }
         });
