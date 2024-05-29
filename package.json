@@ -17,7 +17,7 @@
   "devDependencies": {
     "@babel/core": "7.24.6",
     "@babel/preset-env": "7.24.6",
-    "@peculiar/webcrypto": "1.4.6",
+    "@peculiar/webcrypto": "1.5.0",
     "@picocss/pico": "2.0.6",
     "alpinejs": "3.14.0",
     "babel-loader": "9.1.3",
