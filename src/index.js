@@ -3,6 +3,7 @@
 const { Alpine } = require('alpinejs');
 window.Alpine = Alpine
 const { dbStore } = require('./db');
+const { searchManager } = require('./search_manager');
 
 document.addEventListener('alpine:init', () => {
   Alpine.store('db', dbStore);
@@ -62,19 +63,6 @@ window.searchApp = () => {
   let materialsToShow = []; //short list of materials to show
   let searchTextResponse = ''; //Text to indicate errors (e.g. too many or no results)
   let suggestion = '';
-
-  async function filterMaterialsByName(searchText) {
-    // await new Promise(resolve => setTimeout(resolve, 1000));// TODO Just for testing
-    return await Alpine.store('db').getAll().then((result) => {
-      return result.filter(el => el.key.toLowerCase().includes(searchText.toLowerCase()));
-    });
-  }
-  async function filterMaterialsByDumpText(searchText) {
-    return await Alpine.store('db').getAll().then((result) => {
-      return result.filter(el => el.dump.toLowerCase().includes(searchText.toLowerCase()));
-    });
-  }
-
   function searchBegin() {
     this.materialsToShow = [];
     this.searchInProgress = true;
@@ -122,78 +110,17 @@ window.searchApp = () => {
     }
   }
 
-  let searchResultsManager = {
-    searchResults: [],
-    addMaterialToSearchResults: function (material) {
-      if (!this.searchResults.some(m => m.key === material.shortkey)) {
-        this.searchResults.push({
-          'key': material.shortkey,
-          'material': material,
-          'score': 0,
-        });
-      }
-    },
-    modifyScoreOfSearchResult: function (key, score) {
-      this.searchResults.forEach(res => {
-        if (res.key === key) {
-          res.score += score;
-        }
-      });
-    },
-    getSortedResults: function () {
-      return this.searchResults.sort((a, b) => b.score - a.score);
-    },
-    reset: function () {
-      this.searchResults = [];
-    }
-  };
-  //Add scores to the searchResultsManager?
-  const nameHitScore = 100;
-  const dumpHitScore = 10;
-
-  //Example: keyword1 "double quoted keyphrase" 'single quoted keyphrase2' keyword3's, keyword4,keyword5
-  function separateSearchPhrases(searchInput) {
-    const regex = /"[^"]*"|'[^']*'|\S+/g; //note: it doesn't handle commas or semicolons
-    let parts = searchInput.match(regex).map(keyword => keyword.trim());
-    let phrases = [];
-    parts.forEach(part => {
-      if ((part.startsWith('"') && part.endsWith('"')) ||
-        (part.startsWith("'") && part.endsWith("'"))) {
-        phrases.push(part.slice(1, -1)); //remove quotes
-      }
-      else if (/[,;]/.test(part)) { //split by comma/semicolon, filter empty results in case of separators on either end
-        Array.prototype.push.apply(phrases, part.split(/[,;]/).filter(e => e));
-      }
-      else {
-        phrases.push(part);
-      }
-    });
-    return phrases;
-  }
-
   async function handleSearchInput() {
     this.searchBegin();
-    searchResultsManager.reset();
+    searchManager.reset();
     if (/\S/.test(this.searchInput)) { //non-whitespace character is required in the input
-      const searchPhrases = separateSearchPhrases(this.searchInput);
+      const searchPhrases = searchManager.separateSearchPhrases(this.searchInput);
       console.log('searchPhrases', searchPhrases);
       this.handleSuggestion(searchPhrases);
 
-      for (const phrase of searchPhrases) {
-        const filteredByName = await filterMaterialsByName(phrase);
-        filteredByName.forEach(mat => {
-          searchResultsManager.addMaterialToSearchResults(mat);
-          searchResultsManager.modifyScoreOfSearchResult(mat.shortkey, nameHitScore);
-        });
+      await searchManager.processSearchPhrases(searchPhrases);
 
-        const filteredByDumpText = await filterMaterialsByDumpText(phrase);
-        filteredByDumpText.forEach(mat => {
-          searchResultsManager.addMaterialToSearchResults(mat);
-          searchResultsManager.modifyScoreOfSearchResult(mat.shortkey, dumpHitScore);
-        });
-      }
-
-      this.showSearchResults(searchResultsManager.getSortedResults());
+      this.showSearchResults(searchManager.getSortedResults());
     }
     this.searchEnd();
   }
