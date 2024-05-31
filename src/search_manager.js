@@ -1,5 +1,6 @@
 'use strict';
 
+const { singlePhraseRules, multiPhraseRules } = require('./textbox_rules');
 //TODO abstract away Alpine.store('db').getAll()
 
 const searchManager = {
@@ -10,7 +11,7 @@ const searchManager = {
     if (/\S/.test(this.searchInput)) { //non-whitespace character is required in the input
       const searchPhrases = this.separateSearchPhrases(searchInput);
       await this.processSearchPhrases(searchPhrases);
-      return this.getSortedResults().map(res => ({'score': res.score, 'entry': res}));
+      return this.getSortedResults().map(res => ({ 'score': res.score, 'entry': res }));
     }
     else { return []; }
   },
@@ -65,23 +66,19 @@ const searchManager = {
     });
   },
   getTextBoxes: function (searchPhrases) {
-    let textBoxes = []
-    if (searchPhrases.some(phrase => phrase.toLowerCase().includes('gas'))) {
-      textBoxes.push({
-        'score': 200,
-        'type' : 'infobox',
-        'title': 'gas in the text',
-        'message' : `If you are interested in defining gas mixtures, you can read more about how to do it easily in the <a href='https://github.com/mctools/ncrystal/wiki/Announcement-Release3.2.0'>Announcement of Release3.2.0</a>.`
+    let textBoxes = [];
+    singlePhraseRules.forEach(rule => {
+      searchPhrases.forEach(phrase => {
+        if (rule.condition(phrase)) {
+          textBoxes.push(rule);
+        }
       });
-    }
-    if (searchPhrases.some(phrase => phrase.toLowerCase().includes('warning'))) {
-      textBoxes.push({
-        'score': 210,
-        'type' : 'warnbox',
-        'title': 'text warning',
-        'message' : `You've searched for a warning, so here's one.`
-      });
-    }
+    });
+    multiPhraseRules.forEach(rule => {
+      if (rule.condition(searchPhrases)) {
+        textBoxes.push(rule)
+      }
+    });
     return textBoxes;
   },
   addMaterialToSearchResults: function (material) {
