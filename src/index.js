@@ -60,11 +60,10 @@ window.searchApp = () => {
   let displayedResultsNumber = defaultDisplayedResultsNumber; //number of search results to display
   let searchInput = ''; //input of the search field
   let searchInProgress = false;
-  let materialsToShow = []; //short list of materials to show
+  let searchResultsToShow = [];
   let searchTextResponse = ''; //Text to indicate errors (e.g. too many or no results)
-  let suggestion = '';
   function searchBegin() {
-    this.materialsToShow = [];
+    this.searchResultsToShow = [];
     this.searchInProgress = true;
     this.displayedResultsNumber = defaultDisplayedResultsNumber;
   }
@@ -72,21 +71,21 @@ window.searchApp = () => {
     this.searchInProgress = false;
   }
 
-  function showSearchResults(materialResults) {
-    console.log(materialResults)
+  function showSearchResults(searchResults) {
+    console.log(searchResults)
     this.searchInProgress = false;
     this.searchTextResponse = '';
     const goodScoreThreshold = 100; //TODO move
 
-    if (materialResults.length == 0) {
+    if (searchResults.length == 0) {
       this.searchTextResponse = "No materials found."
     }
     else {
-      const goodResultsNumber = materialResults.filter(res => res.score > goodScoreThreshold).length;
+      const goodResultsNumber = searchResults.filter(res => res.score > goodScoreThreshold).length;
       if (goodResultsNumber > 0) {
         this.displayedResultsNumber = goodResultsNumber;
       }
-      this.materialsToShow = materialResults.map(res => res.material);
+      this.searchResultsToShow = searchResults.map(res => res.entry);
     }
   }
 
@@ -100,28 +99,10 @@ window.searchApp = () => {
     return shortHeaderHtml;
   }
 
-  function handleSuggestion(searchPhrases) {
-    if (searchPhrases.some(phrase => phrase.toLowerCase().includes('gas'))) {
-      this.suggestion = `If you are interested in defining gas mixtures, you can read more about how to do it easily in the <a href='https://github.com/mctools/ncrystal/wiki/Announcement-Release3.2.0'>Announcement of Release3.2.0</a>.`;
-      console.log('found GAS in input', suggestion);
-    }
-    else {
-      this.suggestion = '';
-    }
-  }
-
   async function handleSearchInput() {
     this.searchBegin();
     searchManager.reset();
-    if (/\S/.test(this.searchInput)) { //non-whitespace character is required in the input
-      const searchPhrases = searchManager.separateSearchPhrases(this.searchInput);
-      console.log('searchPhrases', searchPhrases);
-      this.handleSuggestion(searchPhrases);
-
-      await searchManager.processSearchPhrases(searchPhrases);
-
-      this.showSearchResults(searchManager.getSortedResults());
-    }
+    this.showSearchResults(await searchManager.performQuery(this.searchInput));
     this.searchEnd();
   }
 
@@ -129,14 +110,12 @@ window.searchApp = () => {
     searchInput,
     searchTextResponse,
     searchInProgress,
-    materialsToShow,
+    searchResultsToShow,
     handleSearchInput,
     searchBegin,
     searchEnd,
     showSearchResults,
     peakNcmatHeader,
-    suggestion,
-    handleSuggestion,
     displayedResultsNumber
   };
 };

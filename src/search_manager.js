@@ -6,7 +6,15 @@ const searchManager = {
   searchResults: [],
   nameHitScore: 100,
   dumpHitScore: 10,
-  separateSearchPhrases: function(searchInput) {
+  performQuery: async function (searchInput) {
+    if (/\S/.test(this.searchInput)) { //non-whitespace character is required in the input
+      const searchPhrases = this.separateSearchPhrases(searchInput);
+      await this.processSearchPhrases(searchPhrases);
+      return this.getSortedResults().map(res => ({'score': res.score, 'entry': res}));
+    }
+    else { return []; }
+  },
+  separateSearchPhrases: function (searchInput) {
     //Example: keyword1 "double quoted keyphrase" 'single quoted keyphrase2' keyword3's, keyword4,keyword5
     const regex = /"[^"]*"|'[^']*'|\S+/g; //note: it doesn't handle commas or semicolons
     let parts = searchInput.match(regex).map(keyword => keyword.trim());
@@ -39,6 +47,11 @@ const searchManager = {
         this.modifyScoreOfSearchResult(mat.shortkey, this.dumpHitScore);
       });
     }
+    const textBoxes = this.getTextBoxes(searchPhrases);
+    textBoxes.forEach(textBox => {
+      this.addTextBoxToSearchResults(textBox);
+      this.modifyScoreOfSearchResult(textBox.title, textBox.score);
+    })
   },
   filterMaterialsByName: async function (searchText) {
     // await new Promise(resolve => setTimeout(resolve, 1000));// TODO Just for testing
@@ -51,19 +64,56 @@ const searchManager = {
       return result.filter(el => el.dump.toLowerCase().includes(searchText.toLowerCase()));
     });
   },
+  getTextBoxes: function (searchPhrases) {
+    let textBoxes = []
+    if (searchPhrases.some(phrase => phrase.toLowerCase().includes('gas'))) {
+      textBoxes.push({
+        'score': 200,
+        'type' : 'infobox',
+        'title': 'gas in the text',
+        'message' : `If you are interested in defining gas mixtures, you can read more about how to do it easily in the <a href='https://github.com/mctools/ncrystal/wiki/Announcement-Release3.2.0'>Announcement of Release3.2.0</a>.`
+      });
+    }
+    if (searchPhrases.some(phrase => phrase.toLowerCase().includes('warning'))) {
+      textBoxes.push({
+        'score': 210,
+        'type' : 'warnbox',
+        'title': 'text warning',
+        'message' : `You've searched for a warning, so here's one.`
+      });
+    }
+    return textBoxes;
+  },
   addMaterialToSearchResults: function (material) {
-    if (!this.searchResults.some(m => m.key === material.shortkey)) {
+    if (!this.searchResults.some(e => e.data.title === material.shortkey)) {
       this.searchResults.push({
-        'key': material.shortkey,
-        'material': material,
         'score': 0,
+        'type': "mat",
+        'data': {
+          'title': material.shortkey,
+          'message': "TODO search context",//TODO
+          'db_info': material
+        }
+      });
+    }
+  },
+  addTextBoxToSearchResults: function (textBox) {
+    if (!this.searchResults.some(e => e.data.title === textBox.title)) {
+      this.searchResults.push({
+        'score': 0,
+        'type': textBox.type, //"infobox" or "warnbox"
+        'data': {
+          'title': textBox.title,
+          'message': textBox.message,
+          'is_warning': (textBox.type === "warnbox")
+        }
       });
     }
   },
   modifyScoreOfSearchResult: function (key, score) {
-    this.searchResults.forEach(res => {
-      if (res.key === key) {
-        res.score += score;
+    this.searchResults.forEach(e => {
+      if (e.data.title === key) {
+        e.score += score;
       }
     });
   },

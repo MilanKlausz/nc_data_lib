@@ -32,12 +32,7 @@ async function setupDatabase(databasePath) {
 async function performQuery(queryString, databasePath) {
   await setupDatabase(databasePath);
   const { searchManager } = require('../src/search_manager.js');
-  
-  if (/\S/.test(queryString)) { //non-whitespace character is required in the input
-    const searchPhrases = searchManager.separateSearchPhrases(queryString);
-    await searchManager.processSearchPhrases(searchPhrases);
-    return searchManager.getSortedResults();
-  }
+  return await searchManager.performQuery(queryString);
 }
 
 module.exports = { performQuery };

@@ -39,5 +39,5 @@ if __name__ == "__main__":
   queryResult = performQuery(queryString, databasePath)
 
   # print('Result: ', queryResult)
-  shortResults = [ [m['key'], m['score']] for m in queryResult]
+  shortResults = [ [e['entry']['data']['title'], e['entry']['type'], e['score']] for e in queryResult]
   print('Short result: ', shortResults)

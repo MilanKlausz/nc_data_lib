@@ -24,26 +24,31 @@
       <input name="search" type="search" x-model="searchInput" @input.debounce="handleSearchInput"
         @keydown.enter="handleSearchInput" placeholder="Search...">
 
-      <div id="searchSuggestion" x-show="suggestion" x-cloak>
-        <article style="border: 3px solid #1a9505;">
-          <div x-html="suggestion"></div>
-        </article>
-      </div>
 
       <div id="searchMaterialResults" :aria-busy="searchInProgress">
-        <template x-for="mat in materialsToShow.slice(0, displayedResultsNumber)" :key="mat.safekey">
-          <article>
-            <!-- <details style="margin-bottom:0" @click.outside="$el.hasAttribute('open') && $el.removeAttribute('open')"> -->
-            <details style="margin-bottom:0">
-              <summary x-text="mat.shortkey" style="font-weight: bold;color: var(--pico-primary);"></summary>
-              <div x-html="peakNcmatHeader(mat.ncmat_header)"></div>
-              <a :href="getMaterialUrlParam(mat.safekey)" @click.prevent="updateURL(mat.safekey)">
-                <button class="outline" style="margin-top:10px;">See material's page for more details</button>
-              </a>
-            </details>
-          </article>
+        <template x-for="entry in searchResultsToShow.slice(0, displayedResultsNumber)" :key="entry.data.title">
+          <div>
+            <template x-if="entry.type == 'mat'">
+              <article>
+                <!-- <details style="margin-bottom:0" @click.outside="$el.hasAttribute('open') && $el.removeAttribute('open')"> -->
+                <details style="margin-bottom:0">
+                  <summary x-text="entry.data.title" style="font-weight: bold;color: var(--pico-primary);"></summary>
+                  <div x-html="peakNcmatHeader(entry.data.db_info.ncmat_header)"></div>
+                  <a :href="getMaterialUrlParam(entry.data.db_info.safekey)"
+                    @click.prevent="updateURL(entry.data.db_info.safekey)">
+                    <button class="outline" style="margin-top:10px;">See material's page for more details</button>
+                  </a>
+                </details>
+              </article>
+            </template>
+            <template x-if="entry.type == 'infobox' || entry.type == 'warnbox'">
+              <article :style="(entry.type === 'infobox')? 'border: 3px solid #1a9505;' : 'border: 3px solid #e27107;' ">
+                <div x-html="entry.data.message"></div>
+              </article>
+            </template>
+          </div>
         </template>
-        <button x-show="materialsToShow.length > displayedResultsNumber" @click="displayedResultsNumber=Infinity"
+        <button x-show="searchResultsToShow.length > displayedResultsNumber" @click="displayedResultsNumber=Infinity"
           class="outline secondary"> Show all results </button>
       </div>
       <div id="searchTextResponse" x-text="searchTextResponse" x-show="searchInput"></div>
