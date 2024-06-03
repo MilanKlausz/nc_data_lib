@@ -21,17 +21,19 @@ async function generateChecksum(serverDbData) {
 }
 
 async function populateDatabase(serverDbData) {
-  // Generate and store the checksum along with the data in the database
-  return await generateChecksum(serverDbData).then(async checksum => {
-    // Store the checksum in the database labelled as 'versionInfo'
+  // Generate and store the checksum of the database source file in the database
+  await generateChecksum(serverDbData).then(async checksum => {
     return await this._db.put({ _id: 'versionInfo', checksum: checksum, type: 'info' })
-      .then(async () => { // Populate the database
-        return await this._db.bulkDocs(serverDbData.map(material => ({ _id: material.safekey, type: 'material', data: material })))
-          .then(async () => {
-            return await this._db.allDocs({ include_docs: true })
-          });
-      });
   });
+
+  // Populate the database
+  return await this._db.bulkDocs(serverDbData.map(material => ({ _id: material.safekey, type: 'material', data: material })));
+}
+
+async function rePopulateDatabase(serverDbData) {
+  await this._db.destroy();
+  this._initDb();
+  return await this.populateDatabase(serverDbData);
 }
 
 async function checkAndUpdateDatabase(serverDbData) {
@@ -40,16 +42,13 @@ async function checkAndUpdateDatabase(serverDbData) {
   return await this._db.get('versionInfo').then(async versionInfo => {
     return await generateChecksum(serverDbData).then(async serverDataChecksum => {
       if (versionInfo.checksum !== serverDataChecksum) {
-        return await this._db.destroy().then(async () => {
-          this._initDb();
-          return await this.populateDatabase(serverDbData);
-        });
+        return await this.rePopulateDatabase(serverDbData)
       }
     });
   }).catch(async err => {
     if (err.name === 'not_found') {
-      // If versionInfo document does not exist, populate the database
-      return await this.populateDatabase();
+      // If local db exists but versionInfo cannot be found, re-populate the db
+      return await this.rePopulateDatabase();
     } else {
       console.error(err);
     }
@@ -65,8 +64,7 @@ const dbStore = {
     this._initDb();
     return await this._db.info().then(async (localDbInfo) => {
       // Fetch the material data from the server and process it
-      return await fetch(this._serverDataLocation)
-        .then(response => response.json())
+      return await fetch(this._serverDataLocation).then(response => response.json())
         .then(async serverDbData => {
           if (localDbInfo.doc_count === 0) {
             // Local database is empty, so populate it
@@ -79,6 +77,7 @@ const dbStore = {
     });
   },
   populateDatabase,
+  rePopulateDatabase,
   checkAndUpdateDatabase,
   async getAll() {
     return await this._db.allDocs({ include_docs: true }).then((result) => {
