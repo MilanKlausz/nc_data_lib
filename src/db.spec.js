@@ -9,13 +9,8 @@ const fetch = require('node-fetch');
 global.fetch = fetch;
 
 function extractActualDataFromDbResponse(allDocs) {
-  // Extract the actual document data without _id and _rev
-  const actualDocs = allDocs.rows.map(row => {
-    const { _id, _rev, ...doc } = row.doc;
-    return doc;
-  });
-  // Filter out the versionInfo document
-  return actualDocs.filter(doc => !doc.checksum);
+  // Extract the actual document data without _id, _rev, type, and the versionInfo document
+  return allDocs.rows.filter(row => row.doc.type === 'material').map(row => row.doc.data);
 }
 
 const { dbStore } = require('./db.js');
@@ -64,6 +59,17 @@ describe('db.js', () => {
 
       const dbData = extractActualDataFromDbResponse(allDocs);
       expect(dbData).toEqual(serverDbData);
+    });
+    it('should store the checksum in the database', async () => {
+      dbStoreInstance._initDb();
+      const serverDbData = testMatArray2;
+      const { generateChecksum } = require('./db.js');
+      const checksum = await generateChecksum(serverDbData);
+      await dbStoreInstance.populateDatabase(serverDbData);
+
+      dbStoreInstance._db.get('versionInfo').then(versionInfo => {
+        expect(versionInfo.checksum).toEqual(checksum);
+      });
     });
   });
 

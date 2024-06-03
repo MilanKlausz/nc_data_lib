@@ -25,9 +25,9 @@ async function populateDatabase(serverDbData) {
   return generateChecksum(serverDbData)
     .then(checksum => {
       // Store the checksum in the database labelled as 'versionInfo'
-      return this._db.put({ _id: 'versionInfo', checksum: checksum })
+      return this._db.put({ _id: 'versionInfo', checksum: checksum, type: 'info' })
         .then(() => { // Populate the database
-          return this._db.bulkDocs(serverDbData.map((material, index) => ({ _id: index.toString(), ...material })))
+          return this._db.bulkDocs(serverDbData.map(material => ({ _id: material.safekey, type: 'material', data: material })))
             .then(() => this._db.allDocs({ include_docs: true }));
         });
     });
@@ -81,12 +81,12 @@ const dbStore = {
   checkAndUpdateDatabase,
   async getAll() {
     return await this._db.allDocs({ include_docs: true }).then((result) => {
-      return result.rows.map(row => row.doc).filter(el => 'safekey' in el); //exclude the versionInfo document storing the db checksum
+      return result.rows.filter(row => row.doc.type === 'material').map(row => row.doc.data); //exclude the versionInfo document storing the db checksum
     });
   },
-  async getBySafeKey(safeKey) {
-    return await this._db.allDocs({ include_docs: true }).then((result) => { //TODO refactor to proper db query?
-      return result.rows.map(row => row.doc).filter(el => 'safekey' in el && el.safekey === safeKey)[0];
+  async getBySafeKey(safekey) {
+    return await this._db.get(safekey).then(function (doc) {
+      return doc.data;
     });
   },
 };
