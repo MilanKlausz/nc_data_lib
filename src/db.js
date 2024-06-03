@@ -22,33 +22,34 @@ async function generateChecksum(serverDbData) {
 
 async function populateDatabase(serverDbData) {
   // Generate and store the checksum along with the data in the database
-  return generateChecksum(serverDbData)
-    .then(checksum => {
-      // Store the checksum in the database labelled as 'versionInfo'
-      return this._db.put({ _id: 'versionInfo', checksum: checksum, type: 'info' })
-        .then(() => { // Populate the database
-          return this._db.bulkDocs(serverDbData.map(material => ({ _id: material.safekey, type: 'material', data: material })))
-            .then(() => this._db.allDocs({ include_docs: true }));
-        });
-    });
+  return await generateChecksum(serverDbData).then(async checksum => {
+    // Store the checksum in the database labelled as 'versionInfo'
+    return await this._db.put({ _id: 'versionInfo', checksum: checksum, type: 'info' })
+      .then(async () => { // Populate the database
+        return await this._db.bulkDocs(serverDbData.map(material => ({ _id: material.safekey, type: 'material', data: material })))
+          .then(async () => {
+            return await this._db.allDocs({ include_docs: true })
+          });
+      });
+  });
 }
 
 async function checkAndUpdateDatabase(serverDbData) {
   // Compare the checksum of the server material data to the checksum of the stored data
   // re-populate the database only if the checksum is different
-  return this._db.get('versionInfo').then(versionInfo => {
-    return generateChecksum(serverDbData).then(serverDataChecksum => {
+  return await this._db.get('versionInfo').then(async versionInfo => {
+    return await generateChecksum(serverDbData).then(async serverDataChecksum => {
       if (versionInfo.checksum !== serverDataChecksum) {
-        return this._db.destroy().then(() => {
+        return await this._db.destroy().then(async () => {
           this._initDb();
-          return this.populateDatabase(serverDbData);
+          return await this.populateDatabase(serverDbData);
         });
       }
     });
-  }).catch(err => {
+  }).catch(async err => {
     if (err.name === 'not_found') {
       // If versionInfo document does not exist, populate the database
-      return this.populateDatabase();
+      return await this.populateDatabase();
     } else {
       console.error(err);
     }
@@ -62,17 +63,17 @@ const dbStore = {
   _initDb() { this._db = new PouchDB(this._dbName); },
   async init() { //automatically called by Alpine.store
     this._initDb();
-    return this._db.info().then((localDbInfo) => {
+    return await this._db.info().then(async (localDbInfo) => {
       // Fetch the material data from the server and process it
-      return fetch(this._serverDataLocation)
+      return await fetch(this._serverDataLocation)
         .then(response => response.json())
-        .then(serverDbData => {
+        .then(async serverDbData => {
           if (localDbInfo.doc_count === 0) {
             // Local database is empty, so populate it
-            return this.populateDatabase(serverDbData);
+            return await this.populateDatabase(serverDbData);
           } else {
             // Update the database if server data differs from the already stored
-            return this.checkAndUpdateDatabase(serverDbData);
+            return await this.checkAndUpdateDatabase(serverDbData);
           }
         });
     });

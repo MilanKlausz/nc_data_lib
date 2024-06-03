@@ -24,15 +24,23 @@ async function setupDatabase(databasePath) {
   };
   
   // Mimic the database attached to the Alpine object
-  await dbStore.init();
   global.Alpine = {};
   global.Alpine.store = () => dbStore;
+  return await global.Alpine.store().init();
+}
+async function deleteDatabase(){
+  return await global.Alpine.store()._db.destroy();
 }
 
 async function performQuery(queryString, databasePath) {
   await setupDatabase(databasePath);
+
   const { searchManager } = require('../src/search_manager.js');
-  return await searchManager.performQuery(queryString);
+  const result = await searchManager.performQuery(queryString);
+
+  await deleteDatabase();
+
+  return result;
 }
 
 module.exports = { performQuery };
