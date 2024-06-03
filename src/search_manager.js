@@ -8,7 +8,7 @@ const searchManager = {
   nameHitScore: 100,
   dumpHitScore: 10,
   performQuery: async function (searchInput) {
-    if (/\S/.test(this.searchInput)) { //non-whitespace character is required in the input
+    if (/\S/.test(searchInput)) { //non-whitespace character is required in the input
       const searchPhrases = this.separateSearchPhrases(searchInput);
       await this.processSearchPhrases(searchPhrases);
       return this.getSortedResults().map(res => ({ 'score': res.score, 'entry': res }));
