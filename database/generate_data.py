@@ -78,6 +78,14 @@ class Entry:
         plt.savefig(plotfolder.joinpath(self.__plot_xsect_file))
         plt.close()
 
+def generate_checksum(file_path):
+    import hashlib
+    with open(file_path, 'rb') as file:
+        file_content = file.read()
+    file_hash = hashlib.sha256()
+    file_hash.update(file_content)
+    return file_hash.hexdigest()
+
 def create_DB_contents( plotfolder ):
     plotfolder = pathlib.Path(plotfolder)
     if plotfolder.exists():
@@ -106,6 +114,15 @@ def create_DB( outfolder ):
     with pathlib.Path(jsonfile).open('wt') as fh:
         json.dump(db, fh )
     #print(f"Wrote {jsonfile}")
+
+    # Save the checksum of the autogen_db file and a timestamp to a separate file
+    import datetime
+    now = datetime.datetime.now()
+    timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
+    checksum = generate_checksum(jsonfile)
+    checksum_file = outfolder / 'db_checksum.json'
+    with open(checksum_file, 'wt') as fh:
+        json.dump({'checksum': checksum, 'timestamp': timestamp}, fh )
     return outfolder
 
 if __name__=='__main__':
