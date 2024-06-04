@@ -7,48 +7,34 @@ if (process.env.NODE_ENV === 'test') {
   PouchDB = require('pouchdb').default;
 }
 
-async function generateChecksum(serverDbData) {
-  const jsonString = JSON.stringify(serverDbData);
-  // Encode the file content as UTF-8
-  const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(jsonString);
-  // Generate the SHA-256 hash
-  const hashBuffer = await window.crypto.subtle.digest('SHA-256', dataBuffer);
-  // Convert the hash to a hexadecimal string
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hashHex;
+async function populateDatabase(serverDbDataInfo) {
+  // Populate the database with data from the server
+  await fetch(this._serverDataLocation).then(response => response.json())
+    .then(async serverDbData => {
+      return await this._db.bulkDocs(serverDbData.map(material => ({ _id: material.safekey, type: 'material', data: material })));
+    });
+
+  // Store the checksum of the database source file in the database
+  return await this._db.put({ _id: 'versionInfo', checksum: serverDbDataInfo.checksum, timestamp: serverDbDataInfo.timestamp, type: 'info' });
 }
 
-async function populateDatabase(serverDbData) {
-  // Generate and store the checksum of the database source file in the database
-  await generateChecksum(serverDbData).then(async checksum => {
-    return await this._db.put({ _id: 'versionInfo', checksum: checksum, type: 'info' })
-  });
-
-  // Populate the database
-  return await this._db.bulkDocs(serverDbData.map(material => ({ _id: material.safekey, type: 'material', data: material })));
-}
-
-async function rePopulateDatabase(serverDbData) {
+async function rePopulateDatabase(serverDbDataInfo) {
   await this._db.destroy();
   this._initDb();
-  return await this.populateDatabase(serverDbData);
+  return await this.populateDatabase(serverDbDataInfo);
 }
 
-async function checkAndUpdateDatabase(serverDbData) {
+async function checkAndUpdateDatabase(serverDbDataInfo) {
   // Compare the checksum of the server material data to the checksum of the stored data
   // re-populate the database only if the checksum is different
   return await this._db.get('versionInfo').then(async versionInfo => {
-    return await generateChecksum(serverDbData).then(async serverDataChecksum => {
-      if (versionInfo.checksum !== serverDataChecksum) {
-        return await this.rePopulateDatabase(serverDbData)
-      }
-    });
+    if (versionInfo.checksum !== serverDbDataInfo.checksum || versionInfo.timestamp !== serverDbDataInfo.timestamp) {
+      return await this.rePopulateDatabase(serverDbDataInfo);
+    }
   }).catch(async err => {
     if (err.name === 'not_found') {
       // If local db exists but versionInfo cannot be found, re-populate the db
-      return await this.rePopulateDatabase();
+      return await this.rePopulateDatabase(serverDbDataInfo);
     } else {
       console.error(err);
     }
@@ -58,22 +44,24 @@ async function checkAndUpdateDatabase(serverDbData) {
 const dbStore = {
   _dbName: 'ncrystal_db',
   _serverDataLocation: 'autogen_db/db.json',
+  _serverChecksumLocation: 'autogen_db/db_checksum.json',
   _db: null,
   _initDb() { this._db = new PouchDB(this._dbName); },
   async init() { //automatically called by Alpine.store
     this._initDb();
     return await this._db.info().then(async (localDbInfo) => {
-      // Fetch the material data from the server and process it
-      return await fetch(this._serverDataLocation).then(response => response.json())
-        .then(async serverDbData => {
-          if (localDbInfo.doc_count === 0) {
-            // Local database is empty, so populate it
-            return await this.populateDatabase(serverDbData);
-          } else {
-            // Update the database if server data differs from the already stored
-            return await this.checkAndUpdateDatabase(serverDbData);
+      // Fetch version information about the data file on the server
+      return await fetch(this._serverChecksumLocation).then(response => response.json())
+        .then(async serverDbDataInfo => {
+          if (localDbInfo.doc_count === 0) { // Local database is empty, so populate it
+            return await this.populateDatabase(serverDbDataInfo);
+          } else { // Update the database if server data differs from the already stored
+            return await this.checkAndUpdateDatabase(serverDbDataInfo);
           }
         });
+      // .catch(async error => {
+      //   //TODO handle error on frontend
+      // });
     });
   },
   populateDatabase,
@@ -91,4 +79,4 @@ const dbStore = {
   },
 };
 
-module.exports = { dbStore, generateChecksum };
+module.exports = { dbStore };
