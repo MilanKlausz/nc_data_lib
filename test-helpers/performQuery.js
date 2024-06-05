@@ -14,13 +14,20 @@ function parseJsonFromFile(filePath) {
 
 async function setupDatabase(databasePath) {
   // Override the global fetch function
-  global.fetch = (...args) => {
-    return Promise.resolve({
-      ok: true,
-      status: 200,
-      statusText: 'OK',
-      json: () => Promise.resolve(parseJsonFromFile(databasePath)),
-    });
+  global.fetch = (url, options) => {
+    if (url.includes(dbStore._serverDataLocation)) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve(parseJsonFromFile(databasePath)),
+      });
+    }
+    else if (url.includes(dbStore._serverChecksumLocation)) {
+      const { serverDbDataInfo2 } = require('./material-data.js');
+      const checksumMockResponse = new Response(JSON.stringify(serverDbDataInfo2), { status: 200, statusText: 'OK' });
+      return Promise.resolve(checksumMockResponse);
+    }
   };
   
   // Mimic the database attached to the Alpine object
