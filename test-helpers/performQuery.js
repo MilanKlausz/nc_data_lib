@@ -6,10 +6,12 @@ const { dbStore } = require('../src/db.js');
 const { Crypto } = require("@peculiar/webcrypto");
 global.window = { crypto: new Crypto() };
 
-function parseJsonFromFile(filePath) {
+function parseMsgpackFromFile(filePath) {
   const fs = require('fs');
-  const fileContent = fs.readFileSync(filePath, 'utf8');
-  return JSON.parse(fileContent);
+  const fileBuffer = fs.readFileSync(filePath);
+  // Convert buffer to arrayBuffer
+  const arrayBuffer = Uint8Array.from(fileBuffer).buffer;
+  return arrayBuffer;
 }
 
 async function setupDatabase(databasePath) {
@@ -20,10 +22,12 @@ async function setupDatabase(databasePath) {
         ok: true,
         status: 200,
         statusText: 'OK',
-        json: () => Promise.resolve(parseJsonFromFile(databasePath)),
+        headers: { 'Content-Type': 'application/x-msgpack' },
+        arrayBuffer: () => Promise.resolve(parseMsgpackFromFile(databasePath)),
       });
     }
     else if (url.includes(dbStore._serverChecksumLocation)) {
+      //it shouldn't matter what the content, it just needs to have valid format
       const { serverDbDataInfo2 } = require('./material-data.js');
       const checksumMockResponse = new Response(JSON.stringify(serverDbDataInfo2), { status: 200, statusText: 'OK' });
       return Promise.resolve(checksumMockResponse);

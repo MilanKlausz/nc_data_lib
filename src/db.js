@@ -7,11 +7,14 @@ if (process.env.NODE_ENV === 'test') {
   PouchDB = require('pouchdb').default;
 }
 
+const msgpack = require('@msgpack/msgpack');
 async function fetchDataAndPopulateDatabase(serverDbDataInfo) {
   // Populate the database with data from the server
-  await fetch(this._serverDataLocation).then(response => response.json())
-    .then(async serverDbData => {
-      return await this._db.bulkDocs(serverDbData.map(material => ({ _id: material.safekey, type: 'material', data: material })));
+  await fetch(this._serverDataLocation)
+    .then(response => response.arrayBuffer())
+    .then(arrayBuffer => {
+      const data = msgpack.decode(new Uint8Array(arrayBuffer));
+      return this._db.bulkDocs(data.map(material => ({ _id: material.safekey, type: 'material', data: material })));
     });
 
   // Store the checksum of the database source file in the database
@@ -43,7 +46,7 @@ async function checkAndUpdateDatabase(serverDbDataInfo) {
 
 const dbStore = {
   _dbName: 'ncrystal_db',
-  _serverDataLocation: 'autogen_db/db.json',
+  _serverDataLocation: 'autogen_db/db.msgpack',
   _serverChecksumLocation: 'autogen_db/db_checksum.json',
   _db: null,
   _initDb() { this._db = new PouchDB(this._dbName); },

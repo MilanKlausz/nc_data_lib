@@ -115,6 +115,11 @@ def create_DB( outfolder ):
         json.dump(db, fh )
     #print(f"Wrote {jsonfile}")
 
+    msgpackfile = outfolder / 'db.msgpack'
+    import msgpack
+    with pathlib.Path(msgpackfile).open('wb') as fh:
+      msgpack.pack(db, fh)
+
     # Save the checksum of the autogen_db file and a timestamp to a separate file
     import datetime
     now = datetime.datetime.now()
