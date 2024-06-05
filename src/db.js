@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === 'test') {
   PouchDB = require('pouchdb').default;
 }
 
-async function populateDatabase(serverDbDataInfo) {
+async function fetchDataAndPopulateDatabase(serverDbDataInfo) {
   // Populate the database with data from the server
   await fetch(this._serverDataLocation).then(response => response.json())
     .then(async serverDbData => {
@@ -21,7 +21,7 @@ async function populateDatabase(serverDbDataInfo) {
 async function rePopulateDatabase(serverDbDataInfo) {
   await this._db.destroy();
   this._initDb();
-  return await this.populateDatabase(serverDbDataInfo);
+  return await this.fetchDataAndPopulateDatabase(serverDbDataInfo);
 }
 
 async function checkAndUpdateDatabase(serverDbDataInfo) {
@@ -54,7 +54,7 @@ const dbStore = {
       return await fetch(this._serverChecksumLocation).then(response => response.json())
         .then(async serverDbDataInfo => {
           if (localDbInfo.doc_count === 0) { // Local database is empty, so populate it
-            return await this.populateDatabase(serverDbDataInfo);
+            return await this.fetchDataAndPopulateDatabase(serverDbDataInfo);
           } else { // Update the database if server data differs from the already stored
             return await this.checkAndUpdateDatabase(serverDbDataInfo);
           }
@@ -64,7 +64,7 @@ const dbStore = {
       // });
     });
   },
-  populateDatabase,
+  fetchDataAndPopulateDatabase,
   rePopulateDatabase,
   checkAndUpdateDatabase,
   async getAll() {

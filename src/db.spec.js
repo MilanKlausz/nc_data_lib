@@ -27,7 +27,7 @@ describe('db.js', () => {
     }
   });
 
-  describe('populateDatabase', () => {
+  describe('fetchDataAndPopulateDatabase', () => {
     it('should populate the database with the given data', async () => {
       dbStoreInstance._initDb();
       const serverDbDataInfo = serverDbDataInfo1;
@@ -38,7 +38,7 @@ describe('db.js', () => {
           return Promise.resolve(mockResponse);
         }
       });
-      await dbStoreInstance.populateDatabase(serverDbDataInfo);
+      await dbStoreInstance.fetchDataAndPopulateDatabase(serverDbDataInfo);
       const allDocs = await dbStoreInstance._db.allDocs({ include_docs: true });
       expect(allDocs.rows.length).toBeGreaterThan(0);
       const dbData = extractActualDataFromDbResponse(allDocs);
@@ -54,7 +54,7 @@ describe('db.js', () => {
           return Promise.resolve(mockResponse);
         }
       });
-      await dbStoreInstance.populateDatabase(serverDbDataInfo);
+      await dbStoreInstance.fetchDataAndPopulateDatabase(serverDbDataInfo);
       dbStoreInstance._db.get('versionInfo').then(versionInfo => {
         expect(versionInfo.checksum).toEqual(serverDbDataInfo.checksum);
         expect(versionInfo.timestamp).toEqual(serverDbDataInfo.timestamp);
@@ -74,14 +74,14 @@ describe('db.js', () => {
           return Promise.resolve(mockResponse);
         }
       });
-      await dbStoreInstance.populateDatabase(serverDbDataInfo);
+      await dbStoreInstance.fetchDataAndPopulateDatabase(serverDbDataInfo);
       const allDocsBeforeUpdate = await dbStoreInstance._db.allDocs({ include_docs: true });
       //run checkAndUpdateDatabase with the same serverDbDataInfo that is already stored
-      spyOn(dbStoreInstance, 'populateDatabase');
+      spyOn(dbStoreInstance, 'fetchDataAndPopulateDatabase');
       await dbStoreInstance.checkAndUpdateDatabase(serverDbDataInfo);
       const allDocsAfterUpdate = await dbStoreInstance._db.allDocs({ include_docs: true });
       expect(allDocsBeforeUpdate).toEqual(allDocsAfterUpdate);
-      expect(dbStoreInstance.populateDatabase).not.toHaveBeenCalled();
+      expect(dbStoreInstance.fetchDataAndPopulateDatabase).not.toHaveBeenCalled();
     });
     it('should update the database if the checksums do not match', async () => {
       dbStoreInstance._initDb();
@@ -94,7 +94,7 @@ describe('db.js', () => {
           return Promise.resolve(mockResponse);
         }
       });
-      await dbStoreInstance.populateDatabase(serverDbDataInfo);
+      await dbStoreInstance.fetchDataAndPopulateDatabase(serverDbDataInfo);
       const allDocsBeforeUpdate = await dbStoreInstance._db.allDocs({ include_docs: true });
       const dbDataBeforeUpdate = extractActualDataFromDbResponse(allDocsBeforeUpdate);
 
