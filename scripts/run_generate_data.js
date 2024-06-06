@@ -20,6 +20,7 @@ const runPythonScript = (scriptPath) => {
  // Handle the end of the process
  pythonProcess.on('close', (code) => {
     console.log(`child process exited with code ${code}`);
+    process.exit(code); //propagate the exit code
  });
 };
 
