@@ -6,6 +6,9 @@ The first time:
 - Install nvm - https://www.freecodecamp.org/news/node-version-manager-nvm-install-guide/)
 - Install Node.js by runnings: `nvm instal` (it will get the node version to install from .nvmrc)
 - Install the dependencies in the package.json by runnings: `npm install`
+- Install python package dependencies: `python3 -mpip install ncrystal matplotlib protobuf`
+  All three are required for generating the material database
+- Generate the material database by running `npm run generate-data`
 - Build and serve the app locally: `npm start`
   The app should open in your browser on the http://localhost:9000/nc_data_lib/ address.
   (The 'nc_data_lib' part is actually the directory name of your cloned repo, to mimic GH Pages address.)
@@ -64,3 +67,7 @@ Each time:
   Natively scales font sizes and spacings with screen widths, resulting in a consistent and elegant look across devices.
   *link*: https://picocss.com/
   
+- **Protocol Buffers**:
+  A language-neutral, platform-neutral extensible mechanisms for serializing structured data.
+  This is the format used for distributing the material database (it is also gzipped).
+  *link*: https://protobuf.dev/
