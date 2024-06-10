@@ -5,7 +5,7 @@ from queryInterface import performQuery
 
 materialShortKey = 'some.ncmat'
 queryString = "some"
-databasePath = Path(__file__).parent.resolve() / "test_db.msgpack"
+databasePath = Path(__file__).parent.resolve() / "test_db.pb.gz"
 queryResult = performQuery(queryString, databasePath)
 
 materialFound = False

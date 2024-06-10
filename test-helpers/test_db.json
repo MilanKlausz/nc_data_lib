@@ -7,7 +7,7 @@
       "1",
       "2"
     ],
-    "dump": "",
+    "dump": "dump1",
     "ncmat_contents": "NCMAT...",
     "plot_filename_xsect": "stdlib__some.png",
     "extra_keywords": ""
@@ -20,7 +20,7 @@
       "3",
       "4"
     ],
-    "dump": "",
+    "dump": "dump2",
     "ncmat_contents": "NCMAT...",
     "plot_filename_xsect": "stdlib__other.png",
     "extra_keywords": ""

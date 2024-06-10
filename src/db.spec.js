@@ -3,19 +3,61 @@
 const { testMat1, testMat2, testMatArray1, testMatArray2 } = require('../test-helpers/material-data.js');
 const { serverDbDataInfo1, serverDbDataInfo2 } = require('../test-helpers/material-data.js');
 
-const { encode } = require('@msgpack/msgpack');
 const fetch = require('node-fetch');
 global.fetch = fetch;
 let fetchSpy;
+
+const zlib = require('zlib');
+function compressData(protobufEncodedData) {
+  return new Promise((resolve, reject) => {
+    const gzip = zlib.createGzip();
+    const chunks = []; // Array to hold the chunks of compressed data
+    gzip.on('data', chunk => chunks.push(chunk)); // Collect chunks of compressed data
+    gzip.on('end', () => resolve(Buffer.concat(chunks))); // Resolve the promise with the full compressed data
+    gzip.on('error', reject);
+    gzip.write(protobufEncodedData);
+    gzip.end(); // Signal the end of the stream after writing the data
+  });
+}
+
+let materialDbEncoder;
+async function loadMaterialDatabaseDecoder() {
+  const materialDbDecoder = await import('./material_database_decoder.mjs');
+  materialDbEncoder = materialDbDecoder.encodeDatabase;
+}
 
 function extractActualDataFromDbResponse(allDocs) {
   // Extract the actual document data without _id, _rev, type, and the versionInfo document
   return allDocs.rows.filter(row => row.doc.type === 'material').map(row => row.doc.data);
 }
 
-const { dbStore } = require('./db.js');
+async function createMockResponse(data) {
+  const protobufEncodedData = materialDbEncoder({ materials: data });
+  const compressedData = await compressData(protobufEncodedData);
+  return new Response(compressedData, {
+    status: 200,
+    statusText: 'OK',
+    headers: { 'Content-Type': 'application/gzip' },
+  });
+}
 
+function mockFetch(fetchResponses) {
+  fetchSpy.and.callFake((url, options) => {
+    const response = fetchResponses.find(resp => url.includes(resp.urlPart));
+    if (response) {
+      return Promise.resolve(response.data);
+    } else {
+      return Promise.reject(new Error('No matching response found'));
+    }
+  });
+}
+
+const { dbStore } = require('./db.js');
 describe('db.js', () => {
+  beforeAll(async () => {
+    await loadMaterialDatabaseDecoder();
+  });
+
   let dbStoreInstance;
   beforeEach(async () => {
     dbStoreInstance = Object.assign({}, dbStore);
@@ -31,31 +73,19 @@ describe('db.js', () => {
   describe('fetchDataAndPopulateDatabase', () => {
     it('should populate the database with the given data', async () => {
       dbStoreInstance._initDb();
-      const serverDbDataInfo = serverDbDataInfo1;
       const serverDbData = testMatArray2;
-      const mockResponse = new Response(encode(serverDbData), { status: 200, statusText: 'OK', headers: { 'Content-Type': 'application/x-msgpack' }});
-      fetchSpy.and.callFake((url, options) => {
-        if (url.includes(dbStoreInstance._serverDataLocation)) {
-          return Promise.resolve(mockResponse);
-        }
-      });
+      mockFetch([{
+        urlPart: dbStoreInstance._serverDataLocation,
+        data: createMockResponse(serverDbData)
+      }]);
+
+      const serverDbDataInfo = serverDbDataInfo1;
       await dbStoreInstance.fetchDataAndPopulateDatabase(serverDbDataInfo);
       const allDocs = await dbStoreInstance._db.allDocs({ include_docs: true });
       expect(allDocs.rows.length).toBeGreaterThan(0);
       const dbData = extractActualDataFromDbResponse(allDocs);
       expect(dbData).toEqual(serverDbData);
-    });
-    it('should store the checksum and timestamp in the database', async () => {
-      dbStoreInstance._initDb();
-      const serverDbDataInfo = serverDbDataInfo2;
-      const serverDbData = testMatArray2;
-      const mockResponse = new Response(encode(serverDbData), { status: 200, statusText: 'OK', headers: { 'Content-Type': 'application/x-msgpack' }});
-      fetchSpy.and.callFake((url, options) => {
-        if (url.includes(dbStoreInstance._serverDataLocation)) {
-          return Promise.resolve(mockResponse);
-        }
-      });
-      await dbStoreInstance.fetchDataAndPopulateDatabase(serverDbDataInfo);
+
       dbStoreInstance._db.get('versionInfo').then(versionInfo => {
         expect(versionInfo.checksum).toEqual(serverDbDataInfo.checksum);
         expect(versionInfo.timestamp).toEqual(serverDbDataInfo.timestamp);
@@ -67,16 +97,15 @@ describe('db.js', () => {
     it('should not update the db if the checksum of the new data matches the one stored in the db', async () => {
       dbStoreInstance._initDb();
       //store some data to the database
-      const serverDbDataInfo = serverDbDataInfo1;
       const serverDbData = testMatArray1;
-      const mockResponse = new Response(encode(serverDbData), { status: 200, statusText: 'OK', headers: { 'Content-Type': 'application/x-msgpack' }});
-      fetchSpy.and.callFake((url, options) => {
-        if (url.includes(dbStoreInstance._serverDataLocation)) {
-          return Promise.resolve(mockResponse);
-        }
-      });
+      mockFetch([{
+        urlPart: dbStoreInstance._serverDataLocation,
+        data: createMockResponse(serverDbData)
+      }]);
+      const serverDbDataInfo = serverDbDataInfo1;
       await dbStoreInstance.fetchDataAndPopulateDatabase(serverDbDataInfo);
       const allDocsBeforeUpdate = await dbStoreInstance._db.allDocs({ include_docs: true });
+
       //run checkAndUpdateDatabase with the same serverDbDataInfo that is already stored
       spyOn(dbStoreInstance, 'fetchDataAndPopulateDatabase');
       await dbStoreInstance.checkAndUpdateDatabase(serverDbDataInfo);
@@ -84,30 +113,27 @@ describe('db.js', () => {
       expect(allDocsBeforeUpdate).toEqual(allDocsAfterUpdate);
       expect(dbStoreInstance.fetchDataAndPopulateDatabase).not.toHaveBeenCalled();
     });
+
     it('should update the database if the checksums do not match', async () => {
       dbStoreInstance._initDb();
       //store some data to the database
-      const serverDbDataInfo = serverDbDataInfo1;
       const serverDbData = testMatArray1;
-      const mockResponse = new Response(encode(serverDbData), { status: 200, statusText: 'OK', headers: { 'Content-Type': 'application/x-msgpack' }});
-      fetchSpy.and.callFake((url, options) => {
-        if (url.includes(dbStoreInstance._serverDataLocation)) {
-          return Promise.resolve(mockResponse);
-        }
-      });
+      mockFetch([{
+        urlPart: dbStoreInstance._serverDataLocation,
+        data: createMockResponse(serverDbData)
+      }]);
+      const serverDbDataInfo = serverDbDataInfo1;
       await dbStoreInstance.fetchDataAndPopulateDatabase(serverDbDataInfo);
       const allDocsBeforeUpdate = await dbStoreInstance._db.allDocs({ include_docs: true });
       const dbDataBeforeUpdate = extractActualDataFromDbResponse(allDocsBeforeUpdate);
 
       // change the mocking of the global fetch function, and call the checkAndUpdateDatabase with new data
-      const newServerDbDataInfo = serverDbDataInfo2;
       const newServerDbData = testMatArray2;
-      const newMockResponse = new Response(encode(newServerDbData), { status: 200, statusText: 'OK', headers: { 'Content-Type': 'application/x-msgpack' }});
-      fetchSpy.and.callFake((url, options) => {
-        if (url.includes(dbStoreInstance._serverDataLocation)) {
-          return Promise.resolve(newMockResponse);
-        }
-      });
+      mockFetch([{
+        urlPart: dbStoreInstance._serverDataLocation,
+        data: createMockResponse(newServerDbData)
+      }]);
+      const newServerDbDataInfo = serverDbDataInfo2;
       await dbStoreInstance.checkAndUpdateDatabase(newServerDbDataInfo);
       const allDocs = await dbStoreInstance._db.allDocs({ include_docs: true });
       const dbData = extractActualDataFromDbResponse(allDocs);
@@ -118,19 +144,20 @@ describe('db.js', () => {
 
   describe('init', () => {
     it('should fail if database initialisation fails', async () => {
-      fetchSpy.and.callFake((url, options) => {
-        if (url.includes(dbStoreInstance._serverChecksumLocation)) {
-          return Promise.resolve({
-            status: 404,
-            statusText: 'Not Found',
-            ok: false,
-            json: () => Promise.resolve({
-              error: "Not Found",
-              message: "The requested resource could not be found on the server."
-            }),
-          });
-        }
+      const mockResponse = Promise.resolve({
+        status: 404,
+        statusText: 'Not Found',
+        ok: false,
+        json: () => Promise.resolve({
+          error: "Not Found",
+          message: "The requested resource could not be found on the server."
+        }),
       });
+      const fetchResponses = [{
+        urlPart: dbStoreInstance._serverChecksumLocation,
+        data: mockResponse
+      }];
+      mockFetch(fetchResponses);
       try {
         await dbStoreInstance.init();
         fail('Expected init to throw an error.');
@@ -138,19 +165,18 @@ describe('db.js', () => {
         expect(error).toBeTruthy;
       }
     });
+
     it('should initialise the db with data fetched from the (mocked) server', async () => {
       const serverDbDataInfo = serverDbDataInfo2;
       const serverDbData = testMatArray2;
-      const mockResponse = new Response(encode(serverDbData), { status: 200, statusText: 'OK', headers: { 'Content-Type': 'application/x-msgpack' }});
-      const checksumMockResponse = new Response(JSON.stringify(serverDbDataInfo), { status: 200, statusText: 'OK' });
-      fetchSpy.and.callFake((url, options) => {
-        if (url.includes(dbStoreInstance._serverDataLocation)) {
-          return Promise.resolve(mockResponse);
-        }
-        else if (url.includes(dbStoreInstance._serverChecksumLocation)) {
-          return Promise.resolve(checksumMockResponse);
-        }
-      });
+      mockFetch([{
+        urlPart: dbStoreInstance._serverChecksumLocation,
+        data: new Response(JSON.stringify(serverDbDataInfo), { status: 200, statusText: 'OK' })
+      }, {
+        urlPart: dbStoreInstance._serverDataLocation,
+        data: createMockResponse(serverDbData)
+      }]);
+
       spyOn(dbStoreInstance, 'checkAndUpdateDatabase');
       await dbStoreInstance.init();
       expect(dbStoreInstance.checkAndUpdateDatabase).not.toHaveBeenCalled();
@@ -162,20 +188,18 @@ describe('db.js', () => {
       expect(dbData).toEqual(serverDbData);
     });
   });
+
   describe('getAll', () => {
     it('should return all documents excluding the versionInfo', async () => {
       const serverDbDataInfo = serverDbDataInfo1;
       const serverDbData = testMatArray1;
-      const mockResponse = new Response(encode(serverDbData), { status: 200, statusText: 'OK', headers: { 'Content-Type': 'application/x-msgpack' }});
-      const checksumMockResponse = new Response(JSON.stringify(serverDbDataInfo), { status: 200, statusText: 'OK' });
-      fetchSpy.and.callFake((url, options) => {
-        if (url.includes(dbStoreInstance._serverDataLocation)) {
-          return Promise.resolve(mockResponse);
-        }
-        else if (url.includes(dbStoreInstance._serverChecksumLocation)) {
-          return Promise.resolve(checksumMockResponse);
-        }
-      });
+      mockFetch([{
+        urlPart: dbStoreInstance._serverChecksumLocation,
+        data: new Response(JSON.stringify(serverDbDataInfo), { status: 200, statusText: 'OK' })
+      }, {
+        urlPart: dbStoreInstance._serverDataLocation,
+        data: createMockResponse(serverDbData)
+      }]);
       await dbStoreInstance.init();
 
       return dbStoreInstance.getAll().then((result) => {
@@ -191,16 +215,13 @@ describe('db.js', () => {
       const safeKeyToLookFor = "stdlib__favoriteMaterialdncmat";
       const materialToLookFor = { ...testMat1, safekey: safeKeyToLookFor };
       const serverDbData = [materialToLookFor, testMat2];
-      const mockResponse = new Response(encode(serverDbData), { status: 200, statusText: 'OK', headers: { 'Content-Type': 'application/x-msgpack' }});
-      const checksumMockResponse = new Response(JSON.stringify(serverDbDataInfo), { status: 200, statusText: 'OK' });
-      fetchSpy.and.callFake((url, options) => {
-        if (url.includes(dbStoreInstance._serverDataLocation)) {
-          return Promise.resolve(mockResponse);
-        }
-        else if (url.includes(dbStoreInstance._serverChecksumLocation)) {
-          return Promise.resolve(checksumMockResponse);
-        }
-      });
+      mockFetch([{
+        urlPart: dbStoreInstance._serverChecksumLocation,
+        data: new Response(JSON.stringify(serverDbDataInfo), { status: 200, statusText: 'OK' })
+      }, {
+        urlPart: dbStoreInstance._serverDataLocation,
+        data: createMockResponse(serverDbData)
+      }]);
 
       await dbStoreInstance.init();
       dbStoreInstance.getBySafeKey(safeKeyToLookFor).then((result) => {

@@ -6,7 +6,7 @@ const { dbStore } = require('../src/db.js');
 const { Crypto } = require("@peculiar/webcrypto");
 global.window = { crypto: new Crypto() };
 
-function parseMsgpackFromFile(filePath) {
+async function parseFromFile(filePath) {
   const fs = require('fs');
   const fileBuffer = fs.readFileSync(filePath);
   // Convert buffer to arrayBuffer
@@ -16,14 +16,15 @@ function parseMsgpackFromFile(filePath) {
 
 async function setupDatabase(databasePath) {
   // Override the global fetch function
+  const dbArrayBuffer = await parseFromFile(databasePath);
   global.fetch = (url, options) => {
     if (url.includes(dbStore._serverDataLocation)) {
       return Promise.resolve({
         ok: true,
         status: 200,
         statusText: 'OK',
-        headers: { 'Content-Type': 'application/x-msgpack' },
-        arrayBuffer: () => Promise.resolve(parseMsgpackFromFile(databasePath)),
+        headers: { 'Content-Type': 'application/gzip' },
+        arrayBuffer: () => Promise.resolve(dbArrayBuffer),
       });
     }
     else if (url.includes(dbStore._serverChecksumLocation)) {
@@ -33,23 +34,37 @@ async function setupDatabase(databasePath) {
       return Promise.resolve(checksumMockResponse);
     }
   };
-  
+
   // Mimic the database attached to the Alpine object
   global.Alpine = {};
   global.Alpine.store = () => dbStore;
   return await global.Alpine.store().init();
 }
-async function deleteDatabase(){
+async function deleteDatabase() {
   return await global.Alpine.store()._db.destroy();
+}
+
+const fs = require('fs');
+function logToFile(message) {
+  const logFilePath = './performQueryError.txt';
+  fs.appendFile(logFilePath, `${new Date().toISOString()} - ${message}\n`, err => {
+    if (err) throw err;
+  });
 }
 
 async function performQuery(queryString, databasePath) {
   await setupDatabase(databasePath);
 
   const { searchManager } = require('../src/search_manager.js');
-  const result = await searchManager.performQuery(queryString);
+  let result;
 
-  await deleteDatabase();
+  try {
+    result = await searchManager.performQuery(queryString);
+  } catch (error) {
+    logToFile(JSON.stringify(error));
+  } finally {
+    await deleteDatabase();
+  }
 
   return result;
 }

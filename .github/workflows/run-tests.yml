@@ -30,7 +30,7 @@ jobs:
         #This won't be OK for long db generation
       - name: Generate database with NCrystal
         run: |
-          python3 -mpip install ncrystal matplotlib msgpack
+          python3 -mpip install ncrystal matplotlib protobuf
           npm run generate-data
 
       - name: Build dev

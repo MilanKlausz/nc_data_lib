@@ -7,14 +7,16 @@ if (process.env.NODE_ENV === 'test') {
   PouchDB = require('pouchdb').default;
 }
 
-const msgpack = require('@msgpack/msgpack');
+const pako = require('pako');
 async function fetchDataAndPopulateDatabase(serverDbDataInfo) {
   // Populate the database with data from the server
+  const materialDbDecoder = await import('./material_database_decoder.mjs');
   await fetch(this._serverDataLocation)
     .then(response => response.arrayBuffer())
     .then(arrayBuffer => {
-      const data = msgpack.decode(new Uint8Array(arrayBuffer));
-      return this._db.bulkDocs(data.map(material => ({ _id: material.safekey, type: 'material', data: material })));
+      const decompressedData = pako.inflate(new Uint8Array(arrayBuffer));
+      const data = materialDbDecoder.decodeDatabase(decompressedData);
+      return this._db.bulkDocs(data.materials.map(material => ({ _id: material.safekey, type: 'material', data: material })));
     });
 
   // Store the checksum of the database source file in the database
@@ -46,7 +48,7 @@ async function checkAndUpdateDatabase(serverDbDataInfo) {
 
 const dbStore = {
   _dbName: 'ncrystal_db',
-  _serverDataLocation: 'autogen_db/db.msgpack',
+  _serverDataLocation: 'autogen_db/db.pb.gz',
   _serverChecksumLocation: 'autogen_db/db_checksum.json',
   _db: null,
   _initDb() { this._db = new PouchDB(this._dbName); },
