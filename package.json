@@ -9,7 +9,7 @@
     "generate-data": "node scripts/run_generate_data",
     "serve-dev": "webpack serve --config build-config/webpack.dev.config.js",
     "start": "npm run build-dev && npm run serve-dev",
-    "test": "NODE_ENV=test jasmine --config=test-helpers/jasmine.json && python3 test-helpers/testQueryInterface.py"
+    "test": "NODE_ENV=test jasmine --config=test-helpers/jasmine.json && python3 pythonInterface/testQueryInterface.py"
   },
   "keywords": [],
   "author": "",

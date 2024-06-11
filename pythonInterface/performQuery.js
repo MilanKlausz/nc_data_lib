@@ -29,7 +29,7 @@ async function setupDatabase(databasePath) {
     }
     else if (url.includes(dbStore._serverChecksumLocation)) {
       //it shouldn't matter what the content, it just needs to have valid format
-      const { serverDbDataInfo2 } = require('./material-data.js');
+      const { serverDbDataInfo2 } = require('../test-helpers/material-data.js');
       const checksumMockResponse = new Response(JSON.stringify(serverDbDataInfo2), { status: 200, statusText: 'OK' });
       return Promise.resolve(checksumMockResponse);
     }
