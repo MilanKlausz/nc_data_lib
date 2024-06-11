@@ -19,7 +19,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@babel/core": "7.24.6",
+    "@babel/core": "7.24.7",
     "@babel/preset-env": "7.24.7",
     "@peculiar/webcrypto": "1.5.0",
     "@picocss/pico": "2.0.6",
