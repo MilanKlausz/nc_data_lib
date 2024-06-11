@@ -7,6 +7,10 @@
     "build-dev": "webpack --config build-config/webpack.dev.config.js",
     "build-prod": "webpack --config build-config/webpack.prod.config.js",
     "generate-data": "node scripts/run_generate_data",
+    "generate-test-data": "node scripts/generate_test_data",
+    "generate-proto": "npm run generate-proto-js && npm run generate-proto-python",
+    "generate-proto-js": "pbjs --es6 src/material_database_decoder.mjs database/material_database.proto",
+    "generate-proto-python": "protoc --python_out=.  database/material_database.proto",
     "serve-dev": "webpack serve --config build-config/webpack.dev.config.js",
     "start": "npm run build-dev && npm run serve-dev",
     "test": "NODE_ENV=test jasmine --config=test-helpers/jasmine.json && python3 pythonInterface/testQueryInterface.py"
@@ -26,6 +30,7 @@
     "html-webpack-plugin": "5.6.0",
     "jasmine": "5.1.0",
     "mini-css-extract-plugin": "2.9.0",
+    "pbjs": "0.0.14",
     "pouchdb": "8.0.1",
     "sass": "1.77.4",
     "sass-loader": "14.2.1",

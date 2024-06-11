@@ -20,6 +20,29 @@ Each time:
 - Build and serve the app locally: `npm start`
   (Source files are watched. Reloading is only needed when editing the html file, editing js files trigger page reload.)
 
+If the database material format is changed:
+- The database file is being generated with the *database/generate_data.py* script, which is invoked
+  through the *scripts/run_generate_data.js* script by the `npm run generate-data` command. The 
+  *generate_data.py* script uses Protocol Buffer for serializing the material information as structured data.
+  This relies on the structure being defined in the database/material_database.proto file, that describes 
+  each field. This .proto file is used to generate a python and a js module for reading/writing such data. 
+  This can be done by the `npm run generate-proto-python` and `npm run generate-proto-js` commands, or in a
+  single step by `npm run generate-proto`. These commands will create the *database/material_database_pb2.py*
+  and *src/material_database_decoder.mjs* modules that are used to create/read (encode/decode) the protobuffer
+  file containing the material database.
+- In case the material format is changed (e.g. a new field is added to all the materials), the
+  *material_database.proto* file needs to be edited accordingly, and the `npm run generate-proto` command has 
+  to be executed.
+- For unit testing, sample material data can be found in the *test-helpers/material-data.js* file. In case the
+  material format is changed, these dummy materials should be updated accordingly.
+- Pre-made test data (test-helpers/test_db.pb.gz) is used for testing the Python query interface. In order to
+  update the test data as well, the *scripts/generate_test_data.js* script has to be executed by invoking the 
+  `npm run generate-test-data` command. The script will use test data from *test-helpers/material-data.js* and
+  output a new *test-helpers/test_db.pb.gz* file.
+- Requirement (for `npm run generate-proto-python` = `protoc --python_out=.  database/material_database.proto`):
+  MAC: `brew install protobuf`
+  Ubuntu/Debian: `sudo apt-get install protobuf-compiler`
+
 # The current stack
 
 - **Node Version Manager (NVM)**:
