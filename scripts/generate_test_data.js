@@ -3,11 +3,11 @@
 const path = require('path');
 const fs = require('fs');
 const zlib = require('zlib');
-const { testMaterialDatabase } = require('../test-helpers/material-data.js');
+const { testMaterialDb1 } = require('../test-helpers/material-data.js');
 
 async function generateTestData() {
   const materialDbDecoder = await import('../src/material_database_decoder.mjs');
-  const encodedData = materialDbDecoder.encodeDatabase(testMaterialDatabase);
+  const encodedData = materialDbDecoder.encodeDatabase(testMaterialDb1);
 
   zlib.gzip(encodedData, (err, compressedData) => {
     if (err) throw err;

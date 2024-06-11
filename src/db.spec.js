@@ -1,6 +1,6 @@
 'use strict';
 
-const { testMat1, testMat2, testMatArray1, testMatArray2 } = require('../test-helpers/material-data.js');
+const { getCustomisedMaterialDb, testMaterialDb1, testMaterialDb2 } = require('../test-helpers/material-data.js');
 const { serverDbDataInfo1, serverDbDataInfo2 } = require('../test-helpers/material-data.js');
 
 const fetch = require('node-fetch');
@@ -32,7 +32,7 @@ function extractActualDataFromDbResponse(allDocs) {
 }
 
 async function createMockResponse(data) {
-  const protobufEncodedData = materialDbEncoder({ materials: data });
+  const protobufEncodedData = materialDbEncoder(data);
   const compressedData = await compressData(protobufEncodedData);
   return new Response(compressedData, {
     status: 200,
@@ -73,7 +73,7 @@ describe('db.js', () => {
   describe('fetchDataAndPopulateDatabase', () => {
     it('should populate the database with the given data', async () => {
       dbStoreInstance._initDb();
-      const serverDbData = testMatArray2;
+      const serverDbData = testMaterialDb2;
       mockFetch([{
         urlPart: dbStoreInstance._serverDataLocation,
         data: createMockResponse(serverDbData)
@@ -84,7 +84,7 @@ describe('db.js', () => {
       const allDocs = await dbStoreInstance._db.allDocs({ include_docs: true });
       expect(allDocs.rows.length).toBeGreaterThan(0);
       const dbData = extractActualDataFromDbResponse(allDocs);
-      expect(dbData).toEqual(serverDbData);
+      expect(dbData).toEqual(serverDbData.materials);
 
       dbStoreInstance._db.get('versionInfo').then(versionInfo => {
         expect(versionInfo.checksum).toEqual(serverDbDataInfo.checksum);
@@ -97,7 +97,7 @@ describe('db.js', () => {
     it('should not update the db if the checksum of the new data matches the one stored in the db', async () => {
       dbStoreInstance._initDb();
       //store some data to the database
-      const serverDbData = testMatArray1;
+      const serverDbData = testMaterialDb1;
       mockFetch([{
         urlPart: dbStoreInstance._serverDataLocation,
         data: createMockResponse(serverDbData)
@@ -117,7 +117,7 @@ describe('db.js', () => {
     it('should update the database if the checksums do not match', async () => {
       dbStoreInstance._initDb();
       //store some data to the database
-      const serverDbData = testMatArray1;
+      const serverDbData = testMaterialDb1;
       mockFetch([{
         urlPart: dbStoreInstance._serverDataLocation,
         data: createMockResponse(serverDbData)
@@ -128,7 +128,7 @@ describe('db.js', () => {
       const dbDataBeforeUpdate = extractActualDataFromDbResponse(allDocsBeforeUpdate);
 
       // change the mocking of the global fetch function, and call the checkAndUpdateDatabase with new data
-      const newServerDbData = testMatArray2;
+      const newServerDbData = testMaterialDb2;
       mockFetch([{
         urlPart: dbStoreInstance._serverDataLocation,
         data: createMockResponse(newServerDbData)
@@ -138,7 +138,7 @@ describe('db.js', () => {
       const allDocs = await dbStoreInstance._db.allDocs({ include_docs: true });
       const dbData = extractActualDataFromDbResponse(allDocs);
       expect(dbData).not.toEqual(dbDataBeforeUpdate);
-      expect(dbData).toEqual(newServerDbData);
+      expect(dbData).toEqual(newServerDbData.materials);
     });
   });
 
@@ -168,7 +168,7 @@ describe('db.js', () => {
 
     it('should initialise the db with data fetched from the (mocked) server', async () => {
       const serverDbDataInfo = serverDbDataInfo2;
-      const serverDbData = testMatArray2;
+      const serverDbData = testMaterialDb2;
       mockFetch([{
         urlPart: dbStoreInstance._serverChecksumLocation,
         data: new Response(JSON.stringify(serverDbDataInfo), { status: 200, statusText: 'OK' })
@@ -185,14 +185,14 @@ describe('db.js', () => {
       expect(allDocs.rows.length).toBeGreaterThan(0);
 
       const dbData = extractActualDataFromDbResponse(allDocs);
-      expect(dbData).toEqual(serverDbData);
+      expect(dbData).toEqual(serverDbData.materials);
     });
   });
 
   describe('getAll', () => {
     it('should return all documents excluding the versionInfo', async () => {
       const serverDbDataInfo = serverDbDataInfo1;
-      const serverDbData = testMatArray1;
+      const serverDbData = testMaterialDb1;
       mockFetch([{
         urlPart: dbStoreInstance._serverChecksumLocation,
         data: new Response(JSON.stringify(serverDbDataInfo), { status: 200, statusText: 'OK' })
@@ -204,7 +204,7 @@ describe('db.js', () => {
 
       return dbStoreInstance.getAll().then((result) => {
         expect(result.some(row => row._id === "versionInfo")).toBe(false);
-        expect(result.map(row => { const { _id, _rev, ...materialData } = row; return materialData; })).toEqual(serverDbData);
+        expect(result.map(row => { const { _id, _rev, ...materialData } = row; return materialData; })).toEqual(serverDbData.materials);
       });
     });
   });
@@ -213,8 +213,7 @@ describe('db.js', () => {
     it('should return the document (material) with the matching safeKey', async () => {
       const serverDbDataInfo = serverDbDataInfo1;
       const safeKeyToLookFor = "stdlib__favoriteMaterialdncmat";
-      const materialToLookFor = { ...testMat1, safekey: safeKeyToLookFor };
-      const serverDbData = [materialToLookFor, testMat2];
+      const serverDbData = getCustomisedMaterialDb(safeKeyToLookFor);
       mockFetch([{
         urlPart: dbStoreInstance._serverChecksumLocation,
         data: new Response(JSON.stringify(serverDbDataInfo), { status: 200, statusText: 'OK' })
