@@ -193,7 +193,7 @@ describe('db.js', () => {
       }]);
       await dbStoreInstance.init();
 
-      return dbStoreInstance.getAll().then((result) => {
+      await dbStoreInstance.getAll().then((result) => {
         expect(result.some(row => row._id === "versionInfo")).toBe(false);
         expect(result.map(row => { const { _id, _rev, ...materialData } = row; return materialData; })).toEqual(serverDbData.materials);
       });
@@ -205,6 +205,9 @@ describe('db.js', () => {
       const serverDbDataInfo = serverDbDataInfo1;
       const safeKeyToLookFor = "stdlib__favoriteMaterialdncmat";
       const serverDbData = getCustomisedMaterialDb(safeKeyToLookFor);
+      const materialToLookFor = serverDbData.materials.find(mat => mat.safekey === safeKeyToLookFor);
+      const otherMaterial = serverDbData.materials.find(mat => mat.safekey !== safeKeyToLookFor);
+
       mockFetch([{
         urlPart: dbStoreInstance._serverChecksumLocation,
         data: new Response(JSON.stringify(serverDbDataInfo), { status: 200, statusText: 'OK' })
@@ -214,7 +217,7 @@ describe('db.js', () => {
       }]);
 
       await dbStoreInstance.init();
-      dbStoreInstance.getBySafeKey(safeKeyToLookFor).then((result) => {
+      await dbStoreInstance.getBySafeKey(safeKeyToLookFor).then((result) => {
         const { _id, _rev, ...materialData } = result;
         expect(materialData).toEqual(materialToLookFor);
         expect(materialData).not.toEqual(otherMaterial);
