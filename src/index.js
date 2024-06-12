@@ -3,10 +3,12 @@
 import { Alpine } from 'alpinejs';
 window.Alpine = Alpine
 import { dbStore } from './db.js';
-import { searchManager } from './search_manager.js';
+import { getSearchManager } from './search_manager.js';
+let searchManager;
 
 document.addEventListener('alpine:init', () => {
   Alpine.store('db', dbStore);
+  searchManager = getSearchManager(Alpine.store('db'));
 });
 
 document.addEventListener('alpine:init', () => {

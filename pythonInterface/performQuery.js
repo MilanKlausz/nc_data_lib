@@ -3,7 +3,7 @@
 import fs from 'fs';
 import { dbStore } from '../src/db.js';
 import { serverDbDataInfo2 } from '../test-helpers/material-data.js';
-import { searchManager } from '../src/search_manager.js';
+import { getSearchManager } from '../src/search_manager.js';
 
 async function parseFromFile(filePath) {
   const fileBuffer = fs.readFileSync(filePath);
@@ -13,7 +13,7 @@ async function parseFromFile(filePath) {
 }
 
 async function setupDatabase(databasePath) {
-  // Override the global fetch function
+  // Override the global fetch function before dbStore.init()
   const dbArrayBuffer = await parseFromFile(databasePath);
   global.fetch = (url, options) => {
     if (url.includes(dbStore._serverDataLocation)) {
@@ -32,13 +32,11 @@ async function setupDatabase(databasePath) {
     }
   };
 
-  // Mimic the database attached to the Alpine object
-  global.Alpine = {};
-  global.Alpine.store = () => dbStore;
-  return await global.Alpine.store().init();
+  await dbStore.init();
+  return getSearchManager(dbStore);
 }
-async function deleteDatabase() {
-  return await global.Alpine.store()._db.destroy();
+async function deleteDatabase(searchManager) {
+  return await searchManager.db._db.destroy();
 }
 
 function logToFile(message) {
@@ -49,15 +47,15 @@ function logToFile(message) {
 }
 
 async function performQuery(queryString, databasePath) {
-  await setupDatabase(databasePath);
+  const searchManager = await setupDatabase(databasePath);
   let result;
 
   try {
     result = await searchManager.performQuery(queryString);
   } catch (error) {
-    logToFile(JSON.stringify(error));
+    logToFile(error);
   } finally {
-    await deleteDatabase();
+    await deleteDatabase(searchManager);
   }
 
   return result;

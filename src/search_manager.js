@@ -1,9 +1,9 @@
 'use strict';
 
 import { singlePhraseRules, multiPhraseRules } from './textbox_rules.js';
-//TODO abstract away Alpine.store('db').getAll()
 
 const searchManager = {
+  db: null, //getSearchManager should define it
   searchResults: [],
   nameHitScore: 100,
   dumpHitScore: 10,
@@ -56,12 +56,12 @@ const searchManager = {
   },
   filterMaterialsByName: async function (searchText) {
     // await new Promise(resolve => setTimeout(resolve, 1000));// TODO Just for testing
-    return await Alpine.store('db').getAll().then((result) => {
+    return await this.db.getAll().then((result) => {
       return result.filter(el => el.key.toLowerCase().includes(searchText.toLowerCase()));
     });
   },
   filterMaterialsByDumpText: async function (searchText) {
-    return await Alpine.store('db').getAll().then((result) => {
+    return await this.db.getAll().then((result) => {
       return result.filter(el => el.dump.toLowerCase().includes(searchText.toLowerCase()));
     });
   },
@@ -122,4 +122,8 @@ const searchManager = {
   },
 };
 
-export { searchManager };
+function getSearchManager(db) {
+  return {...searchManager, db}
+}
+
+export { getSearchManager };
