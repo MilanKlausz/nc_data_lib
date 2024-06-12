@@ -1,17 +1,21 @@
 'use strict';
 
-const path = require('path');
-const { merge } = require('webpack-merge');
-const commonConfig = require('./webpack.common.config');
-const { execSync } = require('child_process');
+import { merge } from 'webpack-merge';
+import commonConfig from './webpack.common.config.js';
+import { execSync } from 'child_process';
+
+import { fileURLToPath } from 'url';
+import { dirname, basename, join } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Function to get the repository name
 function getRepoName() {
   const repoPath = execSync('git rev-parse --show-toplevel').toString().trim();
-  return path.basename(repoPath);
+  return basename(repoPath);
  }
 
-module.exports = merge(commonConfig, {
+export default merge(commonConfig, {
   mode: 'development',
   devtool: 'inline-source-map',
   output: {
@@ -19,7 +23,7 @@ module.exports = merge(commonConfig, {
   },
   devServer: {
     static: {
-      directory: path.join(__dirname, '../dist'),
+      directory: join(__dirname, '../dist'),
       publicPath: `/${getRepoName()}/`,
     },
     compress: true,

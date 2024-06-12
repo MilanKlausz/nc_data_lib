@@ -28,7 +28,7 @@ If the database material format is changed:
   each field. This .proto file is used to generate a python and a js module for reading/writing such data. 
   This can be done by the `npm run generate-proto-python` and `npm run generate-proto-js` commands, or in a
   single step by `npm run generate-proto`. These commands will create the *database/material_database_pb2.py*
-  and *src/material_database_decoder.mjs* modules that are used to create/read (encode/decode) the protobuffer
+  and *src/material_database_decoder.js* modules that are used to create/read (encode/decode) the protobuffer
   file containing the material database.
 - In case the material format is changed (e.g. a new field is added to all the materials), the
   *material_database.proto* file needs to be edited accordingly, and the `npm run generate-proto` command has 

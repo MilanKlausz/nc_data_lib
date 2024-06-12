@@ -1,13 +1,15 @@
 'use strict';
 
-const { getCustomisedMaterialDb, testMaterialDb1, testMaterialDb2 } = require('../test-helpers/material-data.js');
-const { serverDbDataInfo1, serverDbDataInfo2 } = require('../test-helpers/material-data.js');
+import { getCustomisedMaterialDb, testMaterialDb1, testMaterialDb2 } from '../test-helpers/material-data.js';
+import { serverDbDataInfo1, serverDbDataInfo2 } from '../test-helpers/material-data.js';
+import { encodeDatabase } from './material_database_decoder.js';
+import { dbStore } from './db.js';
 
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 global.fetch = fetch;
 let fetchSpy;
 
-const zlib = require('zlib');
+import zlib from 'zlib';
 function compressData(protobufEncodedData) {
   return new Promise((resolve, reject) => {
     const gzip = zlib.createGzip();
@@ -20,19 +22,13 @@ function compressData(protobufEncodedData) {
   });
 }
 
-let materialDbEncoder;
-async function loadMaterialDatabaseDecoder() {
-  const materialDbDecoder = await import('./material_database_decoder.mjs');
-  materialDbEncoder = materialDbDecoder.encodeDatabase;
-}
-
 function extractActualDataFromDbResponse(allDocs) {
   // Extract the actual document data without _id, _rev, type, and the versionInfo document
   return allDocs.rows.filter(row => row.doc.type === 'material').map(row => row.doc.data);
 }
 
 async function createMockResponse(data) {
-  const protobufEncodedData = materialDbEncoder(data);
+  const protobufEncodedData = encodeDatabase(data);
   const compressedData = await compressData(protobufEncodedData);
   return new Response(compressedData, {
     status: 200,
@@ -52,12 +48,7 @@ function mockFetch(fetchResponses) {
   });
 }
 
-const { dbStore } = require('./db.js');
 describe('db.js', () => {
-  beforeAll(async () => {
-    await loadMaterialDatabaseDecoder();
-  });
-
   let dbStoreInstance;
   beforeEach(async () => {
     dbStoreInstance = Object.assign({}, dbStore);

@@ -1,5 +1,6 @@
 {
   "name": "nc_data_lib",
+  "type":"module",
   "version": "1.0.0",
   "description": "Develop static website for NCrystal data library",
   "main": "index.js",
@@ -9,7 +10,7 @@
     "generate-data": "node scripts/run_generate_data",
     "generate-test-data": "node scripts/generate_test_data",
     "generate-proto": "npm run generate-proto-js && npm run generate-proto-python",
-    "generate-proto-js": "pbjs --es6 src/material_database_decoder.mjs database/material_database.proto",
+    "generate-proto-js": "pbjs --es6 src/material_database_decoder.js database/material_database.proto",
     "generate-proto-python": "protoc --python_out=.  database/material_database.proto",
     "serve-dev": "webpack serve --config build-config/webpack.dev.config.js",
     "start": "npm run build-dev && npm run serve-dev",
@@ -21,7 +22,6 @@
   "devDependencies": {
     "@babel/core": "7.24.7",
     "@babel/preset-env": "7.24.7",
-    "@peculiar/webcrypto": "1.5.0",
     "@picocss/pico": "2.0.6",
     "alpinejs": "3.14.0",
     "babel-loader": "9.1.3",

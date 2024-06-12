@@ -37,4 +37,4 @@ const multiPhraseRules = [
   },
 ]
 
-module.exports = { singlePhraseRules, multiPhraseRules };
+export { singlePhraseRules, multiPhraseRules };

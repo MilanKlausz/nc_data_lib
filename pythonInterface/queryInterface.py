@@ -10,17 +10,7 @@ def performQuery(queryString, databasePath):
   env['NODE_ENV'] = 'test'
 
   inputsJson = json.dumps({"queryString": queryString, "databasePath": str(databasePath)})
-  command = [
-    "node", "-e",
-    f"""
-      const inputs = JSON.parse('{inputsJson}');
-      const path = require('path');
-      const performQueryModule = path.join('{Path(__file__).parent.resolve()}', '/performQuery.js');
-      require(performQueryModule).performQuery(inputs.queryString, inputs.databasePath)
-        .then(result => {{ console.log(JSON.stringify(result)); }})
-        .catch(error => {{ console.error(error); }});
-    """
-  ]
+  command = [ "node", f"{Path(__file__).parent.resolve() / 'performQuery.js'}", inputsJson ]
   try:
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
     if result.stderr:

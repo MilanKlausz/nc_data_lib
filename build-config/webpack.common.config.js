@@ -1,15 +1,19 @@
 'use strict';
 
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 
-module.exports = {
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export default {
   entry: ['./src/index.js', './src/style.scss'],
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, '..', 'dist'),
+    path: resolve(__dirname, '..', 'dist'),
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -19,7 +23,7 @@ module.exports = {
     }),
     new CopyWebpackPlugin({
       patterns: [
-        { from: path.resolve(__dirname, '..', 'database/autogen_db'), to: 'autogen_db' },
+        { from: resolve(__dirname, '..', 'database/autogen_db'), to: 'autogen_db' },
       ],
     }),
     new MiniCssExtractPlugin({

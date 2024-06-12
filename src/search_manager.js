@@ -1,6 +1,6 @@
 'use strict';
 
-const { singlePhraseRules, multiPhraseRules } = require('./textbox_rules');
+import { singlePhraseRules, multiPhraseRules } from './textbox_rules.js';
 //TODO abstract away Alpine.store('db').getAll()
 
 const searchManager = {
@@ -122,4 +122,4 @@ const searchManager = {
   },
 };
 
-module.exports = { searchManager };
+export { searchManager };

@@ -1,13 +1,11 @@
 'use strict';
 
-const { dbStore } = require('../src/db.js');
-
-// Define a global window object with a crypto property to mock window.crypto for generateChecksum
-const { Crypto } = require("@peculiar/webcrypto");
-global.window = { crypto: new Crypto() };
+import fs from 'fs';
+import { dbStore } from '../src/db.js';
+import { serverDbDataInfo2 } from '../test-helpers/material-data.js';
+import { searchManager } from '../src/search_manager.js';
 
 async function parseFromFile(filePath) {
-  const fs = require('fs');
   const fileBuffer = fs.readFileSync(filePath);
   // Convert buffer to arrayBuffer
   const arrayBuffer = Uint8Array.from(fileBuffer).buffer;
@@ -29,7 +27,6 @@ async function setupDatabase(databasePath) {
     }
     else if (url.includes(dbStore._serverChecksumLocation)) {
       //it shouldn't matter what the content, it just needs to have valid format
-      const { serverDbDataInfo2 } = require('../test-helpers/material-data.js');
       const checksumMockResponse = new Response(JSON.stringify(serverDbDataInfo2), { status: 200, statusText: 'OK' });
       return Promise.resolve(checksumMockResponse);
     }
@@ -44,7 +41,6 @@ async function deleteDatabase() {
   return await global.Alpine.store()._db.destroy();
 }
 
-const fs = require('fs');
 function logToFile(message) {
   const logFilePath = './performQueryError.txt';
   fs.appendFile(logFilePath, `${new Date().toISOString()} - ${message}\n`, err => {
@@ -54,8 +50,6 @@ function logToFile(message) {
 
 async function performQuery(queryString, databasePath) {
   await setupDatabase(databasePath);
-
-  const { searchManager } = require('../src/search_manager.js');
   let result;
 
   try {
@@ -69,4 +63,14 @@ async function performQuery(queryString, databasePath) {
   return result;
 }
 
-module.exports = { performQuery };
+async function runPerformQuery() {
+  const inputs = JSON.parse(process.argv[2]);
+  try {
+    const result = await performQuery(inputs.queryString, inputs.databasePath);
+    console.log(JSON.stringify(result));
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+runPerformQuery();

@@ -1,9 +1,9 @@
 'use strict';
 
-const { Alpine } = require('alpinejs');
+import { Alpine } from 'alpinejs';
 window.Alpine = Alpine
-const { dbStore } = require('./db');
-const { searchManager } = require('./search_manager');
+import { dbStore } from './db.js';
+import { searchManager } from './search_manager.js';
 
 document.addEventListener('alpine:init', () => {
   Alpine.store('db', dbStore);

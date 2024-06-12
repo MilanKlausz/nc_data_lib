@@ -1,8 +1,8 @@
 'use strict';
 
-const { merge } = require('webpack-merge');
-const commonConfig = require('./webpack.common.config');
+import { merge } from 'webpack-merge';
+import commonConfig from './webpack.common.config.js';
 
-module.exports = merge(commonConfig, {
+export default merge(commonConfig, {
   mode: 'production',
 });

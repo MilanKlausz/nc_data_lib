@@ -8,17 +8,17 @@ const testMat2 = {
 }
 
 const testMaterialDb1 = {
-  "materials": [ testMat1, testMat2 ]
+  "materials": [testMat1, testMat2]
 }
 const testMaterialDb2 = {
-  "materials": [ testMat1 ]
+  "materials": [testMat1]
 }
 
 function getCustomisedMaterialDb(safekey) {
   return {
     "materials": [
       testMat1,
-      {...testMat1, safekey}
+      { ...testMat1, safekey }
     ]
   }
 }
@@ -27,7 +27,7 @@ const serverDbDataInfo1 = { "checksum": "3f6537702719d23e3df91923d5643967a4fdd19
 
 const serverDbDataInfo2 = { "checksum": "3f6537702719d23e3df91923d5643967a4fdd193bd4a60462bad5b4042e7919d", "timestamp": "2024-06-04 10:02:47" }
 
-module.exports = {
+export {
   testMaterialDb1,
   testMaterialDb2,
   getCustomisedMaterialDb,
