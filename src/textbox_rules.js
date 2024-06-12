@@ -35,6 +35,6 @@ const multiPhraseRules = [
     'type': 'infobox',
     'score': 1000,
   },
-]
+];
 
 export { singlePhraseRules, multiPhraseRules };

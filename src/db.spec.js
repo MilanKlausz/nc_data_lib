@@ -38,7 +38,7 @@ async function createMockResponse(data) {
 }
 
 function mockFetch(fetchResponses) {
-  fetchSpy.and.callFake((url, options) => {
+  fetchSpy.and.callFake((url, _) => {
     const response = fetchResponses.find(resp => url.includes(resp.urlPart));
     if (response) {
       return Promise.resolve(response.data);
@@ -56,7 +56,7 @@ describe('db.js', () => {
   });
 
   afterEach(async () => {
-    if (dbStoreInstance._db != null) {
+    if (dbStoreInstance._db !== null) {
       await dbStoreInstance._db.destroy(); // Clean up the database after each test
     }
   });
@@ -140,8 +140,8 @@ describe('db.js', () => {
         statusText: 'Not Found',
         ok: false,
         json: () => Promise.resolve({
-          error: "Not Found",
-          message: "The requested resource could not be found on the server."
+          error: 'Not Found',
+          message: 'The requested resource could not be found on the server.'
         }),
       });
       const fetchResponses = [{
@@ -194,7 +194,7 @@ describe('db.js', () => {
       await dbStoreInstance.init();
 
       await dbStoreInstance.getAll().then((result) => {
-        expect(result.some(row => row._id === "versionInfo")).toBe(false);
+        expect(result.some(row => row._id === 'versionInfo')).toBe(false);
         expect(result.map(row => { const { _id, _rev, ...materialData } = row; return materialData; })).toEqual(serverDbData.materials);
       });
     });
@@ -203,7 +203,7 @@ describe('db.js', () => {
   describe('getBySafeKey', () => {
     it('should return the document (material) with the matching safeKey', async () => {
       const serverDbDataInfo = serverDbDataInfo1;
-      const safeKeyToLookFor = "stdlib__favoriteMaterialdncmat";
+      const safeKeyToLookFor = 'stdlib__favoriteMaterialdncmat';
       const serverDbData = getCustomisedMaterialDb(safeKeyToLookFor);
       const materialToLookFor = serverDbData.materials.find(mat => mat.safekey === safeKeyToLookFor);
       const otherMaterial = serverDbData.materials.find(mat => mat.safekey !== safeKeyToLookFor);

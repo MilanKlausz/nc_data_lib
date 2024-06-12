@@ -6,7 +6,7 @@ import { decodeDatabase } from './material_database_decoder.js';
 
 async function fetchDataAndPopulateDatabase(serverDbDataInfo) {
   // Populate the database with data from the server
-  await fetch(this._serverDataLocation, { cache: "no-store" })
+  await fetch(this._serverDataLocation, { cache: 'no-store' })
     .then(response => response.arrayBuffer())
     .then(arrayBuffer => {
       const decompressedData = pako.inflate(new Uint8Array(arrayBuffer));
@@ -51,7 +51,7 @@ const dbStore = {
     this._initDb();
     return await this._db.info().then(async (localDbInfo) => {
       // Fetch version information about the data file on the server
-      return await fetch(this._serverChecksumLocation, { cache: "no-store" }).then(response => response.json())
+      return await fetch(this._serverChecksumLocation, { cache: 'no-store' }).then(response => response.json())
         .then(async serverDbDataInfo => {
           if (localDbInfo.doc_count === 0) { // Local database is empty, so populate it
             return await this.fetchDataAndPopulateDatabase(serverDbDataInfo);

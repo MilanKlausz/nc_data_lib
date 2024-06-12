@@ -15,7 +15,7 @@ async function parseFromFile(filePath) {
 async function setupDatabase(databasePath) {
   // Override the global fetch function before dbStore.init()
   const dbArrayBuffer = await parseFromFile(databasePath);
-  global.fetch = (url, options) => {
+  global.fetch = (url, _) => {
     if (url.includes(dbStore._serverDataLocation)) {
       return Promise.resolve({
         ok: true,

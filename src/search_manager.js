@@ -52,7 +52,7 @@ const searchManager = {
     textBoxes.forEach(textBox => {
       this.addTextBoxToSearchResults(textBox);
       this.modifyScoreOfSearchResult(textBox.title, textBox.score);
-    })
+    });
   },
   filterMaterialsByName: async function (searchText) {
     // await new Promise(resolve => setTimeout(resolve, 1000));// TODO Just for testing
@@ -76,7 +76,7 @@ const searchManager = {
     });
     multiPhraseRules.forEach(rule => {
       if (rule.condition(searchPhrases)) {
-        textBoxes.push(rule)
+        textBoxes.push(rule);
       }
     });
     return textBoxes;
@@ -85,10 +85,10 @@ const searchManager = {
     if (!this.searchResults.some(e => e.data.title === material.shortkey)) {
       this.searchResults.push({
         'score': 0,
-        'type': "mat",
+        'type': 'mat',
         'data': {
           'title': material.shortkey,
-          'message': "TODO search context",//TODO
+          'message': 'TODO search context',//TODO
           'db_info': material
         }
       });
@@ -102,7 +102,7 @@ const searchManager = {
         'data': {
           'title': textBox.title,
           'message': textBox.message,
-          'is_warning': (textBox.type === "warnbox")
+          'is_warning': (textBox.type === 'warnbox')
         }
       });
     }
@@ -123,7 +123,7 @@ const searchManager = {
 };
 
 function getSearchManager(db) {
-  return {...searchManager, db}
+  return { ...searchManager, db };
 }
 
 export { getSearchManager };

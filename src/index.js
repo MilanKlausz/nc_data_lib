@@ -1,7 +1,7 @@
 'use strict';
 
 import { Alpine } from 'alpinejs';
-window.Alpine = Alpine
+window.Alpine = Alpine;
 import { dbStore } from './db.js';
 import { getSearchManager } from './search_manager.js';
 let searchManager;
@@ -40,7 +40,7 @@ document.addEventListener('alpine:init', () => {
       return await Alpine.store('db').getBySafeKey(materialSafeKey);
     },
     getMaterialUrlParam(key) {
-      return key ? "?" + new URLSearchParams({ 'material': key }).toString() : window.location.pathname;
+      return key ? '?' + new URLSearchParams({ 'material': key }).toString() : window.location.pathname;
     },
     updateURL(materialSafeKey) {
       history.pushState(null, null, this.getMaterialUrlParam(materialSafeKey));
@@ -74,13 +74,13 @@ window.searchApp = () => {
   }
 
   function showSearchResults(searchResults) {
-    console.log(searchResults)
+    console.log(searchResults);
     this.searchInProgress = false;
     this.searchTextResponse = '';
     const goodScoreThreshold = 100; //TODO move
 
-    if (searchResults.length == 0) {
-      this.searchTextResponse = "No materials found."
+    if (searchResults.length === 0) {
+      this.searchTextResponse = 'No materials found.';
     }
     else {
       const goodResultsNumber = searchResults.filter(res => res.score > goodScoreThreshold).length;
@@ -128,4 +128,4 @@ document.addEventListener('alpine:init', () => {
   }));
 });
 
-Alpine.start()
+Alpine.start();

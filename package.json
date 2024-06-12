@@ -1,6 +1,6 @@
 {
   "name": "nc_data_lib",
-  "type":"module",
+  "type": "module",
   "version": "1.0.0",
   "description": "Develop static website for NCrystal data library",
   "main": "index.js",
@@ -12,9 +12,10 @@
     "generate-proto": "npm run generate-proto-js && npm run generate-proto-python",
     "generate-proto-js": "pbjs --es6 src/material_database_decoder.js database/material_database.proto",
     "generate-proto-python": "protoc --python_out=.  database/material_database.proto",
+    "lint": "NODE_ENV=test eslint 'src/**/*.js' 'scripts/**/*.js' 'test-helpers/*.js' 'pythonInterface/*.js'",
     "serve-dev": "webpack serve --config build-config/webpack.dev.config.js",
     "start": "npm run build-dev && npm run serve-dev",
-    "test": "NODE_ENV=test jasmine --config=test-helpers/jasmine.json && python3 pythonInterface/testQueryInterface.py"
+    "test": "npm run lint && NODE_ENV=test jasmine --config=test-helpers/jasmine.json && python3 pythonInterface/testQueryInterface.py"
   },
   "keywords": [],
   "author": "",
@@ -22,11 +23,14 @@
   "devDependencies": {
     "@babel/core": "7.24.7",
     "@babel/preset-env": "7.24.7",
+    "@eslint/js": "9.4.0",
     "@picocss/pico": "2.0.6",
     "alpinejs": "3.14.0",
     "babel-loader": "9.1.3",
     "copy-webpack-plugin": "12.0.2",
     "css-loader": "7.1.2",
+    "eslint": "9.4.0",
+    "globals": "15.4.0",
     "html-webpack-plugin": "5.6.0",
     "jasmine": "5.1.0",
     "mini-css-extract-plugin": "2.9.0",
