@@ -1,0 +1,13 @@
+name: nc_data_lib
+channels:
+  - nodefaults
+  - conda-forge
+dependencies:
+  - python
+  - ncrystal
+  - matplotlib
+  - protobuf
+  - pip
+  - pip:
+    - protobuf
+    - numpy==1.26.4 #temp solution until NCrystal becomes compatible with v2.0
