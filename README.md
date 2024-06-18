@@ -5,9 +5,9 @@ Develop static website for NCrystal data library
 The first time:
 - Install nvm - https://www.freecodecamp.org/news/node-version-manager-nvm-install-guide/)
 - Install Node.js by runnings: `nvm instal` (it will get the node version to install from .nvmrc)
-- Install the dependencies in the package.json by runnings: `npm install`
-- Install python package dependencies: `python3 -mpip install ncrystal matplotlib protobuf`
-  All three are required for generating the material database
+- Install Node dependencies in the package.json by runnings: `npm install`
+- Install other dependencies with a conda environment: `conda env create -f conda-env.yml`
+- Activate the conda environment: `conda activate nc_data_lib`
 - Generate the material database by running `npm run generate-data`
 - Build and serve the app locally: `npm start`
   The app should open in your browser on the http://localhost:9000/nc_data_lib/ address.
@@ -19,6 +19,8 @@ Each time:
   update your node modules according to the package.json/package-lock.json files.
 - Build and serve the app locally: `npm start`
   (Source files are watched. Reloading is only needed when editing the html file, editing js files trigger page reload.)
+- If you want to re-generate the database, or do other Python related development, you also have to activate the conda environment:
+  `conda activate nc_data_lib`
 
 If the database material format is changed:
 - The database file is being generated with the *database/generate_data.py* script, which is invoked
@@ -39,9 +41,6 @@ If the database material format is changed:
   update the test data as well, the *scripts/generate_test_data.js* script has to be executed by invoking the 
   `npm run generate-test-data` command. The script will use test data from *test-helpers/material-data.js* and
   output a new *test-helpers/test_db.pb.gz* file.
-- Requirement (for `npm run generate-proto-python` = `protoc --python_out=.  database/material_database.proto`):
-  MAC: `brew install protobuf`
-  Ubuntu/Debian: `sudo apt-get install protobuf-compiler`
 
 # The current stack
 
