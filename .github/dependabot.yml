@@ -6,3 +6,6 @@ updates:
     directory: "/"  # Look for `package.json` and `lock` files in the `root` directory
     schedule:
       interval: "daily"
+    update-types:
+      - major
+      - minor
