@@ -11,10 +11,22 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+    env:
+      CONDA_SOLVER: libmamba
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up conda env
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: nc_data_lib
+          environment-file: ./conda-env.yml
+          auto-activate-base: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -29,9 +41,7 @@ jobs:
 
         #This won't be OK for long db generation
       - name: Generate database with NCrystal
-        run: |
-          python3 -mpip install ncrystal matplotlib protobuf
-          npm run generate-data
+        run: npm run generate-data
 
       - name: Build dev
         run: npm run build-dev
