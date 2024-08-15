@@ -21,7 +21,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@babel/core": "7.24.9",
+    "@babel/core": "7.25.2",
     "@babel/preset-env": "7.25.3",
     "@eslint/js": "9.9.0",
     "@picocss/pico": "2.0.6",
