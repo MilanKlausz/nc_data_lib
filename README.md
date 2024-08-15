@@ -42,6 +42,12 @@ If the database material format is changed:
   `npm run generate-test-data` command. The script will use test data from *test-helpers/material-data.js* and
   output a new *test-helpers/test_db.pb.gz* file.
 
+If the Node.js version is to be updated:
+- The Node version is stored in two places: in the *.nvmrc* file (used by nvm - Node Version Manager) and in the *"engines" : "node"* section of the *package.json* file (used by npm - Node Package Manager). They should be edited simultaneously, keeping in mind that the LTS versions of Node are the ones starting with an even number (possible way to check available versions: `nvm ls-remote`).
+- The `nvm install` command should then be invoked to install the new version of Node.
+- After a version upgrade, other developers are likely to encounter a warning including *"npm warn EBADENGINE Unsupported engine (...)"* when trying to invoke `npm install` after pulling the new version of the code. They will need install the new version of Node with the `nvm install` command.
+- If not used for other projects, one can uninstall the previous version(s) of Node (see installed version with `nvm ls`) by `nvm uninstall <version>`.
+
 # The current stack
 
 - **Node Version Manager (NVM)**:
