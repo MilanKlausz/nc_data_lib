@@ -3,15 +3,6 @@
 //Rules to be applied to each search phrase independently
 const singlePhraseRules = [
   {
-    'title': 'gas in the text',
-    'condition': function (phrase) {
-      return phrase.toLowerCase().includes('gas');
-    },
-    'message': `If you are interested in defining gas mixtures, you can read more about how to do it easily in the <a href='https://github.com/mctools/ncrystal/wiki/Announcement-Release3.2.0'>Announcement of Release3.2.0</a>.`,
-    'type': 'infobox',
-    'score': 200
-  },
-  {
     'title': 'TEST warning',
     'condition': function (phrase) {
       return phrase.toLowerCase().includes('warning');
@@ -24,6 +15,16 @@ const singlePhraseRules = [
 
 //Rules to be applied to multiple search phrases together
 const multiPhraseRules = [
+  {
+    'title': 'gas in the text',
+    'condition': function (phrases) {
+      return phrases.some(phrase => phrase.toLowerCase().includes('gas') &&
+      !phrase.includes('gAs') && !phrase.includes('GaS')); //exclude e.g. AgAs and GaSe
+    },
+    'message': `If you are interested in defining gas mixtures, you can read more about how to do it easily in the <a href='https://github.com/mctools/ncrystal/wiki/Announcement-Release3.2.0'>Announcement of Release3.2.0</a>.`,
+    'type': 'infobox',
+    'score': 1000
+  },
   {
     'title': 'TEST multiPhraseRule',
     'condition': function (phrases) {
