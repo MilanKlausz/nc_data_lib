@@ -1,17 +1,13 @@
 'use strict';
 
 import PouchDB from 'pouchdb';
-import pako from 'pako';
-import { decodeDatabase } from './material_database_decoder.js';
 
 async function fetchDataAndPopulateDatabase(serverDbDataInfo) {
   // Populate the database with data from the server
   await fetch(this._serverDataLocation, { cache: 'no-store' })
-    .then(response => response.arrayBuffer())
-    .then(arrayBuffer => {
-      const decompressedData = pako.inflate(new Uint8Array(arrayBuffer));
-      const data = decodeDatabase(decompressedData);
-      return this._db.bulkDocs(data.materials.map(material => ({ _id: material.safekey, type: 'material', data: material })));
+    .then(response => response.json())
+    .then(async serverDbData => {
+      return await this._db.bulkDocs(serverDbData.map(material => ({ _id: material.safekey, type: 'material', data: material })));
     });
 
   // Store the checksum of the database source file in the database
@@ -43,7 +39,7 @@ async function checkAndUpdateDatabase(serverDbDataInfo) {
 
 const dbStore = {
   _dbName: 'ncrystal_db',
-  _serverDataLocation: 'autogen_db/db.pb.gz',
+  _serverDataLocation: 'autogen_db/db.json',
   _serverChecksumLocation: 'autogen_db/db_checksum.json',
   _db: null,
   _initDb() { this._db = new PouchDB(this._dbName); },

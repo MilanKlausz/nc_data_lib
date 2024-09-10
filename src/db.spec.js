@@ -2,25 +2,11 @@
 
 import { getCustomisedMaterialDb, testMaterialDb1, testMaterialDb2 } from '../test-helpers/material-data.js';
 import { serverDbDataInfo1, serverDbDataInfo2 } from '../test-helpers/material-data.js';
-import { encodeDatabase } from './material_database_decoder.js';
 import { dbStore } from './db.js';
 
 import fetch from 'node-fetch';
 global.fetch = fetch;
 let fetchSpy;
-
-import zlib from 'zlib';
-function compressData(protobufEncodedData) {
-  return new Promise((resolve, reject) => {
-    const gzip = zlib.createGzip();
-    const chunks = []; // Array to hold the chunks of compressed data
-    gzip.on('data', chunk => chunks.push(chunk)); // Collect chunks of compressed data
-    gzip.on('end', () => resolve(Buffer.concat(chunks))); // Resolve the promise with the full compressed data
-    gzip.on('error', reject);
-    gzip.write(protobufEncodedData);
-    gzip.end(); // Signal the end of the stream after writing the data
-  });
-}
 
 function extractActualDataFromDbResponse(allDocs) {
   // Extract the actual document data without _id, _rev, type, and the versionInfo document
@@ -28,9 +14,7 @@ function extractActualDataFromDbResponse(allDocs) {
 }
 
 async function createMockResponse(data) {
-  const protobufEncodedData = encodeDatabase(data);
-  const compressedData = await compressData(protobufEncodedData);
-  return new Response(compressedData, {
+  return new Response(JSON.stringify(data), {
     status: 200,
     statusText: 'OK',
     headers: { 'Content-Type': 'application/gzip' },
@@ -75,7 +59,7 @@ describe('db.js', () => {
       const allDocs = await dbStoreInstance._db.allDocs({ include_docs: true });
       expect(allDocs.rows.length).toBeGreaterThan(0);
       const dbData = extractActualDataFromDbResponse(allDocs);
-      expect(dbData).toEqual(serverDbData.materials);
+      expect(dbData).toEqual(serverDbData);
 
       dbStoreInstance._db.get('versionInfo').then(versionInfo => {
         expect(versionInfo.checksum).toEqual(serverDbDataInfo.checksum);
@@ -129,7 +113,7 @@ describe('db.js', () => {
       const allDocs = await dbStoreInstance._db.allDocs({ include_docs: true });
       const dbData = extractActualDataFromDbResponse(allDocs);
       expect(dbData).not.toEqual(dbDataBeforeUpdate);
-      expect(dbData).toEqual(newServerDbData.materials);
+      expect(dbData).toEqual(newServerDbData);
     });
   });
 
@@ -176,7 +160,7 @@ describe('db.js', () => {
       expect(allDocs.rows.length).toBeGreaterThan(0);
 
       const dbData = extractActualDataFromDbResponse(allDocs);
-      expect(dbData).toEqual(serverDbData.materials);
+      expect(dbData).toEqual(serverDbData);
     });
   });
 
@@ -195,7 +179,7 @@ describe('db.js', () => {
 
       await dbStoreInstance.getAll().then((result) => {
         expect(result.some(row => row._id === 'versionInfo')).toBe(false);
-        expect(result.map(row => { const { _id, _rev, ...materialData } = row; return materialData; })).toEqual(serverDbData.materials);
+        expect(result.map(row => { const { _id, _rev, ...materialData } = row; return materialData; })).toEqual(serverDbData);
       });
     });
   });
@@ -205,8 +189,8 @@ describe('db.js', () => {
       const serverDbDataInfo = serverDbDataInfo1;
       const safeKeyToLookFor = 'stdlib__favoriteMaterialdncmat';
       const serverDbData = getCustomisedMaterialDb(safeKeyToLookFor);
-      const materialToLookFor = serverDbData.materials.find(mat => mat.safekey === safeKeyToLookFor);
-      const otherMaterial = serverDbData.materials.find(mat => mat.safekey !== safeKeyToLookFor);
+      const materialToLookFor = serverDbData.find(mat => mat.safekey === safeKeyToLookFor);
+      const otherMaterial = serverDbData.find(mat => mat.safekey !== safeKeyToLookFor);
 
       mockFetch([{
         urlPart: dbStoreInstance._serverChecksumLocation,

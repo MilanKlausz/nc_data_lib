@@ -9,5 +9,4 @@ dependencies:
   - protobuf
   - pip
   - pip:
-    - protobuf
-    - numpy==1.26.4 #temp solution until NCrystal becomes compatible with v2.0
+    - numpy

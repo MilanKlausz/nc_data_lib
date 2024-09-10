@@ -7,20 +7,14 @@ const testMat2 = {
   'key': 'stdlib::other.ncmat', 'shortkey': 'other.ncmat', 'safekey': 'stdlib__otherdncmat', 'ncmat_header': ['3', '4'], 'dump': 'dump2', 'ncmat_contents': 'NCMAT...', 'plot_filename_xsect': 'stdlib__other.png', 'extra_keywords': ''
 };
 
-const testMaterialDb1 = {
-  'materials': [testMat1, testMat2]
-};
-const testMaterialDb2 = {
-  'materials': [testMat1]
-};
+const testMaterialDb1 = [testMat1, testMat2];
+const testMaterialDb2 = [testMat1];
 
 function getCustomisedMaterialDb(safekey) {
-  return {
-    'materials': [
-      testMat1,
-      { ...testMat1, safekey }
-    ]
-  };
+  return [ 
+    testMat1, 
+    { ...testMat1, safekey } 
+  ];
 }
 
 const serverDbDataInfo1 = { 'checksum': '3f6537702719d23e3df91923d5643967a4fdd193bd4a60462bad5b4042e7919d', 'timestamp': '2024-05-25 16:30:42' };

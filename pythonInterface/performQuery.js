@@ -5,24 +5,20 @@ import { dbStore } from '../src/db.js';
 import { serverDbDataInfo2 } from '../test-helpers/material-data.js';
 import { getSearchManager } from '../src/search_manager.js';
 
-async function parseFromFile(filePath) {
-  const fileBuffer = fs.readFileSync(filePath);
-  // Convert buffer to arrayBuffer
-  const arrayBuffer = Uint8Array.from(fileBuffer).buffer;
-  return arrayBuffer;
+function parseJsonFromFile(filePath) {
+  const fileContent = fs.readFileSync(filePath, 'utf8');
+  return JSON.parse(fileContent);
 }
 
 async function setupDatabase(databasePath) {
   // Override the global fetch function before dbStore.init()
-  const dbArrayBuffer = await parseFromFile(databasePath);
   global.fetch = (url, _) => {
     if (url.includes(dbStore._serverDataLocation)) {
       return Promise.resolve({
         ok: true,
         status: 200,
         statusText: 'OK',
-        headers: { 'Content-Type': 'application/gzip' },
-        arrayBuffer: () => Promise.resolve(dbArrayBuffer),
+        json: () => Promise.resolve(parseJsonFromFile(databasePath)),
       });
     }
     else if (url.includes(dbStore._serverChecksumLocation)) {
