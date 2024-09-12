@@ -74,7 +74,7 @@ window.searchApp = () => {
   }
 
   function showSearchResults(searchResults) {
-    console.log(searchResults);
+    console.log(searchResults);//TODO for development
     this.searchInProgress = false;
     this.searchTextResponse = '';
     const goodScoreThreshold = 100; //TODO move
@@ -83,7 +83,7 @@ window.searchApp = () => {
       this.searchTextResponse = 'No materials found.';
     }
     else {
-      const goodResultsNumber = searchResults.filter(res => res.score > goodScoreThreshold).length;
+      const goodResultsNumber = searchResults.filter(res => res.score >= goodScoreThreshold).length;
       if (goodResultsNumber > 0) {
         this.displayedResultsNumber = goodResultsNumber;
       }
