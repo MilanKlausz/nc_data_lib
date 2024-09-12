@@ -32,7 +32,7 @@
               <article>
                 <!-- <details style="margin-bottom:0" @click.outside="$el.hasAttribute('open') && $el.removeAttribute('open')"> -->
                 <details style="margin-bottom:0">
-                  <summary x-text="entry.data.title" style="font-weight: bold;color: var(--pico-primary);"></summary>
+                  <summary x-html="`${entry.data.title}<br><h6 style='font-size: 0.6em; --pico-font-weight: 500;'>${entry.data.message}</h6>`" style="font-weight: bold;color: var(--pico-primary);"></summary>
                   <div x-html="peakNcmatHeader(entry.data.db_info.ncmat_header)"></div>
                   <a :href="getMaterialUrlParam(entry.data.db_info.safekey)"
                     @click.prevent="updateURL(entry.data.db_info.safekey)">

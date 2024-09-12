@@ -1,1 +1,5 @@
 @use "@picocss/pico/scss/pico";
+
+details[open] summary h6 {
+  display: none;
+}
