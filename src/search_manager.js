@@ -1,12 +1,11 @@
 'use strict';
 
-import { singlePhraseRules, multiPhraseRules } from './textbox_rules.js';
+import { textBoxRules } from './text_box_rules.js';
+import { applySearchRules } from './search_rules.js';
 
 const searchManager = {
   db: null, //getSearchManager should define it
   searchResults: [],
-  nameHitScore: 100,
-  dumpHitScore: 10,
   performQuery: async function (searchInput) {
     if (/\S/.test(searchInput)) { //non-whitespace character is required in the input
       const searchPhrases = this.separateSearchPhrases(searchInput);
@@ -35,84 +34,71 @@ const searchManager = {
     return phrases;
   },
   processSearchPhrases: async function (searchPhrases) {
-    for (const phrase of searchPhrases) {
-      const filteredByName = await this.filterMaterialsByName(phrase);
-      filteredByName.forEach(mat => {
-        this.addMaterialToSearchResults(mat);
-        this.modifyScoreOfSearchResult(mat.shortkey, this.nameHitScore);
-      });
-
-      const filteredByDumpText = await this.filterMaterialsByDumpText(phrase);
-      filteredByDumpText.forEach(mat => {
-        this.addMaterialToSearchResults(mat);
-        this.modifyScoreOfSearchResult(mat.shortkey, this.dumpHitScore);
-      });
-    }
+    // handle text boxes
     const textBoxes = this.getTextBoxes(searchPhrases);
     textBoxes.forEach(textBox => {
-      this.addTextBoxToSearchResults(textBox);
-      this.modifyScoreOfSearchResult(textBox.title, textBox.score);
+      this.addTextBoxToSearchResults(textBox, textBox.score);
     });
-  },
-  filterMaterialsByName: async function (searchText) {
-    // await new Promise(resolve => setTimeout(resolve, 1000));// TODO Just for testing
-    return await this.db.getAll().then((result) => {
-      return result.filter(el => el.key.toLowerCase().includes(searchText.toLowerCase()));
-    });
-  },
-  filterMaterialsByDumpText: async function (searchText) {
-    return await this.db.getAll().then((result) => {
-      return result.filter(el => el.dump.toLowerCase().includes(searchText.toLowerCase()));
+
+    // handle materials
+    await this.db.getAllMaterials().then((materials) => {
+      //note: passing an arrow function as an argument to preserve the 'this' context
+      applySearchRules(searchPhrases, materials, (material, score, context) => {
+        this.addMaterialToSearchResults(material, score, context);
+      });
     });
   },
   getTextBoxes: function (searchPhrases) {
     let textBoxes = [];
-    singlePhraseRules.forEach(rule => {
-      searchPhrases.forEach(phrase => {
-        if (rule.condition(phrase)) {
-          textBoxes.push(rule);
-        }
-      });
-    });
-    multiPhraseRules.forEach(rule => {
+    textBoxRules.forEach(rule => {
       if (rule.condition(searchPhrases)) {
         textBoxes.push(rule);
       }
     });
     return textBoxes;
   },
-  addMaterialToSearchResults: function (material) {
+  addMaterialToSearchResults: function (material, score=0, message='') {
     if (!this.searchResults.some(e => e.data.title === material.shortkey)) {
-      this.searchResults.push({
-        'score': 0,
-        'type': 'mat',
-        'data': {
-          'title': material.shortkey,
-          'message': 'TODO search context',//TODO
-          'db_info': material
-        }
-      });
+      this.addNewMaterialToSearchResults(material, score, message);
+    } else {
+      this.modifySearchResults(material.shortkey, score, message);
     }
   },
-  addTextBoxToSearchResults: function (textBox) {
+  addTextBoxToSearchResults: function (textBox, score=0) {
     if (!this.searchResults.some(e => e.data.title === textBox.title)) {
-      this.searchResults.push({
-        'score': 0,
-        'type': textBox.type, //"infobox" or "warnbox"
-        'data': {
-          'title': textBox.title,
-          'message': textBox.message,
-          'is_warning': (textBox.type === 'warnbox')
-        }
-      });
+      this.addNewTextBoxToSearchResults(textBox, score);
+    } else {
+      this.modifySearchResults(textBox.title, score);
     }
   },
-  modifyScoreOfSearchResult: function (key, score) {
-    this.searchResults.forEach(e => {
-      if (e.data.title === key) {
-        e.score += score;
+  addNewMaterialToSearchResults(material, score=0, message='') {
+    this.searchResults.push({
+      'score': score,
+      'type': 'mat',
+      'data': {
+        'title': material.shortkey,
+        'message': message, //should contain the context of the search hit
+        'db_info': material
       }
     });
+  },
+  addNewTextBoxToSearchResults(textBox, score=0) {
+    this.searchResults.push({
+      'score': score,
+      'type': textBox.type, //"infobox" or "warnbox"
+      'data': {
+        'title': textBox.title,
+        'message': textBox.message,
+        'is_warning': (textBox.type === 'warnbox')
+      }
+    });
+  },
+  modifySearchResults(key, score, message='') {
+    const searchResults = this.searchResults.find(e => e.data.title === key);
+    searchResults.score += score;
+    if (message !=='') {
+      searchResults.data.message += message; //This simple addition is probably not OK, but i'm unsure about multiple contexts..would be better with a list and then decide what to do with it on the frontend
+    }
   },
   getSortedResults: function () {
     return this.searchResults.sort((a, b) => b.score - a.score);
@@ -122,7 +108,9 @@ const searchManager = {
   },
 };
 
+
 function getSearchManager(db) {
+  //returns a searchManager object with the db field overridden by the provided database
   return { ...searchManager, db };
 }
 

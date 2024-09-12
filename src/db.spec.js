@@ -164,7 +164,7 @@ describe('db.js', () => {
     });
   });
 
-  describe('getAll', () => {
+  describe('getAllMaterials', () => {
     it('should return all documents excluding the versionInfo', async () => {
       const serverDbDataInfo = serverDbDataInfo1;
       const serverDbData = testMaterialDb1;
@@ -177,7 +177,7 @@ describe('db.js', () => {
       }]);
       await dbStoreInstance.init();
 
-      await dbStoreInstance.getAll().then((result) => {
+      await dbStoreInstance.getAllMaterials().then((result) => {
         expect(result.some(row => row._id === 'versionInfo')).toBe(false);
         expect(result.map(row => { const { _id, _rev, ...materialData } = row; return materialData; })).toEqual(serverDbData);
       });

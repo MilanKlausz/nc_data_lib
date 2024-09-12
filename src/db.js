@@ -63,7 +63,7 @@ const dbStore = {
   fetchDataAndPopulateDatabase,
   rePopulateDatabase,
   checkAndUpdateDatabase,
-  async getAll() {
+  async getAllMaterials() {
     return await this._db.allDocs({ include_docs: true }).then((result) => {
       return result.rows.filter(row => row.doc.type === 'material').map(row => row.doc.data); //exclude the versionInfo document storing the db checksum
     });
