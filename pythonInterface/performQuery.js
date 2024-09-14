@@ -2,38 +2,45 @@
 
 import fs from 'fs';
 import { dbStore } from '../src/db.js';
-import { serverDbDataInfo2 } from '../test-helpers/material-data.js';
 import { getSearchManager } from '../src/search_manager.js';
+const defaultServerBaseUrl = 'https://milanklausz.github.io/nc_data_lib/'; //TODO store somewhere else?
 
 function parseJsonFromFile(filePath) {
   const fileContent = fs.readFileSync(filePath, 'utf8');
   return JSON.parse(fileContent);
 }
 
-async function setupDatabase(databasePath) {
-  // Override the global fetch function before dbStore.init()
-  global.fetch = (url, _) => {
-    if (url.includes(dbStore._serverDataLocation)) {
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: () => Promise.resolve(parseJsonFromFile(databasePath)),
-      });
-    }
-    else if (url.includes(dbStore._serverChecksumLocation)) {
-      //it shouldn't matter what the content, it just needs to have valid format
-      const checksumMockResponse = new Response(JSON.stringify(serverDbDataInfo2), { status: 200, statusText: 'OK' });
-      return Promise.resolve(checksumMockResponse);
-    }
-  };
+function createMockResponseFromFile(filePath) {
+  return Promise.resolve({
+    ok: true, status: 200, statusText: 'OK',
+    json: () => Promise.resolve(parseJsonFromFile(filePath)),
+  });
+}
+
+async function setupDatabase(localDb = null) {
+  if (localDb === null) { //fetch db files from online server
+    const baseUrl = process.env.DEFAULT_SERVER_BASE_URL || defaultServerBaseUrl;
+    //add base url to locations from where data will be attempted to be fetched
+    dbStore._serverDataLocation = `${baseUrl}${dbStore._serverDataLocation}`;
+    dbStore._serverChecksumLocation = `${baseUrl}${dbStore._serverChecksumLocation}`;
+  }
+  else { //use local db files
+    global.fetch = (url, _) => { // Override the global fetch function before dbStore.init()
+      if (url === dbStore._serverDataLocation) {
+        return createMockResponseFromFile(localDb.dbPath);
+      }
+      else if (url === dbStore._serverChecksumLocation) {
+        return createMockResponseFromFile(localDb.dbChecksumPath);
+      }
+    };
+  }
 
   await dbStore.init();
   return getSearchManager(dbStore);
 }
-async function deleteDatabase(searchManager) {
-  return await searchManager.db._db.destroy();
-}
+// async function deleteDatabase(searchManager) {
+//   return await searchManager.db._db.destroy();
+// }
 
 function logToFile(message) {
   const logFilePath = './performQueryError.txt';
@@ -42,26 +49,24 @@ function logToFile(message) {
   });
 }
 
-async function performQuery(queryString, databasePath) {
-  const searchManager = await setupDatabase(databasePath);
-  let result;
-
+async function performQuery(queryString, localDb = null) {
+  const searchManager = await setupDatabase(localDb);
   try {
-    result = await searchManager.performQuery(queryString);
+    return await searchManager.performQuery(queryString);
   } catch (error) {
     logToFile(error);
-  } finally {
-    await deleteDatabase(searchManager);
   }
-
-  return result;
 }
 
 async function runPerformQuery() {
-  const inputs = JSON.parse(process.argv[2]);
   try {
-    const result = await performQuery(inputs.queryString, inputs.databasePath);
-    console.log(JSON.stringify(result));
+    const inputs = JSON.parse(process.argv[2]);
+    const localDb = (inputs?.dbPath && inputs?.dbChecksumPath)
+      ? { dbPath: inputs.dbPath, dbChecksumPath: inputs.dbChecksumPath }
+      : null;
+    const result = await performQuery(inputs.queryString, localDb);
+
+    console.log(JSON.stringify(result)); //output the result
   } catch (error) {
     console.error(error);
   }
