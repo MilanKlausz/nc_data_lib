@@ -15,7 +15,7 @@
     "lint": "NODE_ENV=test eslint 'src/**/*.js' 'scripts/**/*.js' 'test-helpers/*.js' 'pythonInterface/*.js'",
     "serve-dev": "webpack serve --config build-config/webpack.dev.config.js",
     "start": "npm run build-dev && npm run serve-dev",
-    "test": "npm run lint && NODE_ENV=test jasmine --config=test-helpers/jasmine.json && python3 pythonInterface/testQueryInterface.py"
+    "test": "npm run lint && NODE_ENV=test jasmine --config=test-helpers/jasmine.json && pytest pythonInterface/"
   },
   "keywords": [],
   "author": "",
