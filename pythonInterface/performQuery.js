@@ -19,12 +19,14 @@ function createMockResponseFromFile(filePath) {
 
 async function setupDatabase(localDb = null) {
   if (localDb === null) { //fetch db files from online server
+    dbStore._dbName = 'ncrystal_db_online';
     const baseUrl = process.env.DEFAULT_SERVER_BASE_URL || defaultServerBaseUrl;
     //add base url to locations from where data will be attempted to be fetched
     dbStore._serverDataLocation = `${baseUrl}${dbStore._serverDataLocation}`;
     dbStore._serverChecksumLocation = `${baseUrl}${dbStore._serverChecksumLocation}`;
   }
   else { //use local db files
+    dbStore._dbName = 'ncrystal_db_local';
     global.fetch = (url, _) => { // Override the global fetch function before dbStore.init()
       if (url === dbStore._serverDataLocation) {
         return createMockResponseFromFile(localDb.dbPath);

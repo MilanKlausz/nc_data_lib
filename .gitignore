@@ -5,8 +5,8 @@ dist
 #ignore the autogen_db dir
 autogen_db/
 
-#ignore local pouchdb dir
-ncrystal_db/
+#ignore local pouchdb directories
+ncrystal_db*/
 
 #ignore emacs backup and lock files:
 *~
