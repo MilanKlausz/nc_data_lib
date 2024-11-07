@@ -37,7 +37,7 @@
     "pbjs": "0.0.14",
     "pouchdb": "9.0.0",
     "sass": "1.80.6",
-    "sass-loader": "16.0.2",
+    "sass-loader": "16.0.3",
     "webpack": "5.96.1",
     "webpack-cli": "5.1.4",
     "webpack-dev-server": "5.1.0"
