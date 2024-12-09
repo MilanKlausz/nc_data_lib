@@ -32,7 +32,7 @@
     "eslint": "9.16.0",
     "globals": "15.13.0",
     "html-webpack-plugin": "5.6.3",
-    "jasmine": "5.4.0",
+    "jasmine": "5.5.0",
     "mini-css-extract-plugin": "2.9.2",
     "pbjs": "0.0.14",
     "pouchdb": "9.0.0",
